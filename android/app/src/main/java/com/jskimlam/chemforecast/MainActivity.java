@@ -11,6 +11,7 @@ import android.os.Bundle;                  // 화면 상태 저장용
 import android.provider.MediaStore;        // 사진 앱(갤러리) 저장소
 import android.util.Base64;                // base64 글자를 이미지 데이터로 되돌리는 용도
 import android.view.KeyEvent;              // 뒤로가기 키 처리용
+import android.view.View;                  // 상태바 아이콘 색 지정용
 import android.view.Window;                // 상태바 색 지정용
 import android.webkit.JavascriptInterface; // 웹페이지에서 부를 수 있는 앱 기능 표시
 import android.webkit.WebResourceError;    // 웹 오류 정보
@@ -37,7 +38,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState); // 기본 동작 실행
 
         Window window = getWindow(); // 창 가져오기
-        window.setStatusBarColor(Color.parseColor("#5B5BF0")); // 상태바를 앱 대표색으로
+        window.setStatusBarColor(Color.parseColor("#CFE8FA")); // 상태바를 하늘색 파스텔로(대시보드 배경과 이어지게)
+        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR); // 밝은 배경이므로 상태바 글자는 어둡게
 
         webView = new WebView(this); // 웹뷰 생성
         setContentView(webView);     // 화면 전체를 웹뷰로 채움

@@ -11,46 +11,46 @@ PLACEHOLDER = "__CHEM_DATA__"  # 템플릿 안에서 데이터가 들어갈 자�
 
 # ── 그룹(탭 상단 줄) ─────────────────────────────────────────────
 GROUPS = [  # 화면에 보이는 순서(상류 → 하류)
-    {"id": "crude", "label": "유가·납사"},  # 원유와 납사
-    {"id": "olefin", "label": "올레핀·방향족"},  # 에틸렌, 벤젠, 톨루엔, 프로필렌
-    {"id": "sm", "label": "SM(스티렌)"},  # 스티렌모노머
-    {"id": "an", "label": "AN"},  # 아크릴로니트릴
-    {"id": "bd", "label": "BD(부타디엔)"},  # 부타디엔
-    {"id": "resin", "label": "합성수지"},  # ABS, PS, HIPS, PP
-    {"id": "freight", "label": "운임"},  # 액체화학품 운임
+    {"id": "crude", "label": "Crude · Naphtha"},  # 원유와 납사
+    {"id": "olefin", "label": "Olefin · Aromatics"},  # 에틸렌, 벤젠, 톨루엔, 프로필렌
+    {"id": "sm", "label": "Styrene"},  # 스티렌모노머
+    {"id": "an", "label": "Acrylonitrile"},  # 아크릴로니트릴
+    {"id": "bd", "label": "Butadiene"},  # 부타디엔
+    {"id": "resin", "label": "Resins"},  # ABS, PS, HIPS, PP
+    {"id": "freight", "label": "Freight"},  # 액체화학품 운임
 ]  # 그룹 목록 끝
 
 # ── 품목 27개 ────────────────────────────────────────────────────
 # code: 플래츠 심볼(엑셀 헤더와 동일), key: 명령행에서 쓰는 짧은 영문 이름, label: 탭에 보이는 이름,
 # group: 소속 그룹, unit: 가격 단위, ccy: 통화, freq: D(일간) 또는 W(주간, 가격이 주 1회만 나오는 품목)
 ITEMS = [  # 품목 목록(탭 순서)
-    {"code": "NMCL001", "key": "WTI_NYMEX", "label": "WTI (NYMEX)", "group": "crude", "unit": "BBL", "ccy": "USD", "freq": "D", "name": "NYMEX Light Sweet Crude Settlement Mo01"},
-    {"code": "PCACG00", "key": "WTI_CUSHING", "label": "WTI (Cushing)", "group": "crude", "unit": "BBL", "ccy": "USD", "freq": "D", "name": "WTI Cushing Mo01"},
-    {"code": "PAAAD00", "key": "NAPHTHA", "label": "납사 CFR 일본", "group": "crude", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Naphtha C+F Japan Cargo $/mt (NextGen MOC)"},
-    {"code": "AAOTM00", "key": "ETHYLENE", "label": "에틸렌 CFR NE아시아", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "Ethylene CFR NE Asia"},
-    {"code": "AAWWK00", "key": "PROPYLENE", "label": "프로필렌 CFR 중국", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "Propylene Poly Grade CFR China"},
-    {"code": "PHASM05", "key": "BZ_FOB_KR", "label": "벤젠 FOB 한국", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Benzene FOB Korea Marker"},
-    {"code": "AAOAX00", "key": "BZ_CIF_ARA", "label": "벤젠 CIF ARA", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Benzene CIF ARA"},
-    {"code": "AAKYD00", "key": "BZ_FOB_USG", "label": "벤젠 FOB USG", "group": "olefin", "unit": "GAL", "ccy": "USC", "freq": "D", "name": "Benzene FOB USG Mo02 cts/gal"},
-    {"code": "PHASO05", "key": "TOLUENE", "label": "톨루엔 FOB 한국", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Toluene FOB Korea Marker"},
-    {"code": "AAMFL00", "key": "SM_FOB_KR", "label": "SM FOB 한국", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene FOB Korea Marker LC 90 days"},
-    {"code": "PHACB00", "key": "SM_CFR_TW", "label": "SM CFR 대만", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene CFR Taiwan"},
-    {"code": "AAMFI00", "key": "SM_CFR_CN", "label": "SM CFR 중국", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene CFR China Marker LC 90 days"},
-    {"code": "STYFC00", "key": "SM_FOB_CN", "label": "SM FOB 중국", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene Monomer FOB China Marker"},
-    {"code": "AAOTU00", "key": "SM_EAST_CN", "label": "SM 동중국(위안)", "group": "sm", "unit": "MT", "ccy": "CNY", "freq": "D", "name": "Styrene East China Prompt Marker Yuan/mt"},
-    {"code": "AAOQP00", "key": "SM_FOB_ARA", "label": "SM FOB ARA", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene FOB ARA"},
-    {"code": "AAIKW00", "key": "SM_FOB_USG", "label": "SM FOB USG", "group": "sm", "unit": "LB", "ccy": "USC", "freq": "D", "name": "Styrene FOB USG cts/lb"},
-    {"code": "PHAOO00", "key": "AN_CFR_FE", "label": "AN CFR 극동 (주간)", "group": "an", "unit": "MT", "ccy": "USD", "freq": "W", "name": "ACN CFR FE Asia Weekly"},
-    {"code": "AAWWM00", "key": "BD_FOB_KR", "label": "BD FOB 한국", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Butadiene FOB Korea"},
-    {"code": "AAWWL00", "key": "BD_CFR_CN", "label": "BD CFR 중국", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "W", "name": "Butadiene CFR China"},
-    {"code": "BTNEA00", "key": "BD_CFR_NEA", "label": "BD CFR NE아시아", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Butadiene CFR North East Asia"},
-    {"code": "AAWWU00", "key": "BD_CN_DOM", "label": "BD 중국내수(위안)", "group": "bd", "unit": "MT", "ccy": "CNY", "freq": "D", "name": "Butadiene China Domestic (Ex-Tank) Yuan/mt"},
-    {"code": "PHAHF00", "key": "ABS", "label": "ABS Inj CFR 중국 (주간)", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "ABS Inj CFR China Weekly"},
-    {"code": "PHAIL00", "key": "PS", "label": "PS GP CFR 중국 (주간)", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "PS G-P CFR China Weekly"},
-    {"code": "PHAIR00", "key": "HIPS", "label": "HIPS CFR 중국 (주간)", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "HIPS CFR China Weekly"},
-    {"code": "PHBIF00", "key": "PP", "label": "PP Inj CFR 극동", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "PP Inj CFR FE Asia"},
-    {"code": "AAVCC00", "key": "FRT_USG_KR", "label": "운임 USG→한국", "group": "freight", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Liquid Chemicals Freight USG-Korea 10-12 kt (daily)"},
-    {"code": "AAVCA00", "key": "FRT_KR_CN", "label": "운임 한국→동중국", "group": "freight", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Liquid Chemicals Freight Korea-East China 5 kt (daily)"},
+    {"code": "NMCL001", "key": "WTI_NYMEX", "label": "WTI NYMEX", "group": "crude", "unit": "BBL", "ccy": "USD", "freq": "D", "name": "NYMEX Light Sweet Crude Settlement Mo01"},
+    {"code": "PCACG00", "key": "WTI_CUSHING", "label": "WTI Cushing", "group": "crude", "unit": "BBL", "ccy": "USD", "freq": "D", "name": "WTI Cushing Mo01"},
+    {"code": "PAAAD00", "key": "NAPHTHA", "label": "Naphtha CFR Japan", "group": "crude", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Naphtha C+F Japan Cargo $/mt (NextGen MOC)"},
+    {"code": "AAOTM00", "key": "ETHYLENE", "label": "Ethylene CFR NE Asia", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "Ethylene CFR NE Asia"},
+    {"code": "AAWWK00", "key": "PROPYLENE", "label": "Propylene CFR China", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "Propylene Poly Grade CFR China"},
+    {"code": "PHASM05", "key": "BZ_FOB_KR", "label": "Benzene FOB Korea", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Benzene FOB Korea Marker"},
+    {"code": "AAOAX00", "key": "BZ_CIF_ARA", "label": "Benzene CIF ARA", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Benzene CIF ARA"},
+    {"code": "AAKYD00", "key": "BZ_FOB_USG", "label": "Benzene FOB USG", "group": "olefin", "unit": "GAL", "ccy": "USC", "freq": "D", "name": "Benzene FOB USG Mo02 cts/gal"},
+    {"code": "PHASO05", "key": "TOLUENE", "label": "Toluene FOB Korea", "group": "olefin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Toluene FOB Korea Marker"},
+    {"code": "AAMFL00", "key": "SM_FOB_KR", "label": "Styrene FOB Korea", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene FOB Korea Marker LC 90 days"},
+    {"code": "PHACB00", "key": "SM_CFR_TW", "label": "Styrene CFR Taiwan", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene CFR Taiwan"},
+    {"code": "AAMFI00", "key": "SM_CFR_CN", "label": "Styrene CFR China", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene CFR China Marker LC 90 days"},
+    {"code": "STYFC00", "key": "SM_FOB_CN", "label": "Styrene FOB China", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene Monomer FOB China Marker"},
+    {"code": "AAOTU00", "key": "SM_EAST_CN", "label": "Styrene East China (CNY)", "group": "sm", "unit": "MT", "ccy": "CNY", "freq": "D", "name": "Styrene East China Prompt Marker Yuan/mt"},
+    {"code": "AAOQP00", "key": "SM_FOB_ARA", "label": "Styrene FOB ARA", "group": "sm", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Styrene FOB ARA"},
+    {"code": "AAIKW00", "key": "SM_FOB_USG", "label": "Styrene FOB USG", "group": "sm", "unit": "LB", "ccy": "USC", "freq": "D", "name": "Styrene FOB USG cts/lb"},
+    {"code": "PHAOO00", "key": "AN_CFR_FE", "label": "Acrylonitrile CFR FE Asia", "group": "an", "unit": "MT", "ccy": "USD", "freq": "W", "name": "ACN CFR FE Asia Weekly"},
+    {"code": "AAWWM00", "key": "BD_FOB_KR", "label": "Butadiene FOB Korea", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Butadiene FOB Korea"},
+    {"code": "AAWWL00", "key": "BD_CFR_CN", "label": "Butadiene CFR China", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "W", "name": "Butadiene CFR China"},
+    {"code": "BTNEA00", "key": "BD_CFR_NEA", "label": "Butadiene CFR NE Asia", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Butadiene CFR North East Asia"},
+    {"code": "AAWWU00", "key": "BD_CN_DOM", "label": "Butadiene China Domestic (CNY)", "group": "bd", "unit": "MT", "ccy": "CNY", "freq": "D", "name": "Butadiene China Domestic (Ex-Tank) Yuan/mt"},
+    {"code": "PHAHF00", "key": "ABS", "label": "ABS Inj CFR China", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "ABS Inj CFR China Weekly"},
+    {"code": "PHAIL00", "key": "PS", "label": "PS GP CFR China", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "PS G-P CFR China Weekly"},
+    {"code": "PHAIR00", "key": "HIPS", "label": "HIPS CFR China", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "HIPS CFR China Weekly"},
+    {"code": "PHBIF00", "key": "PP", "label": "PP Inj CFR Far East", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "D", "name": "PP Inj CFR FE Asia"},
+    {"code": "AAVCC00", "key": "FRT_USG_KR", "label": "Freight USG to Korea", "group": "freight", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Liquid Chemicals Freight USG-Korea 10-12 kt (daily)"},
+    {"code": "AAVCA00", "key": "FRT_KR_CN", "label": "Freight Korea to East China", "group": "freight", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Liquid Chemicals Freight Korea-East China 5 kt (daily)"},
 ]  # 품목 목록 끝
 
 # 화면(탭)에 보일 품목 코드. 목록에 없는 품목은 가격 파일에는 남아 있지만 대시보드·입력 대상에서는 빠집니다.

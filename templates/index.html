@@ -7,17 +7,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<script>if (window.LamApp) document.documentElement.setAttribute('data-theme', 'light'); /* 앱에서는 하늘색 밝은 테마 고정 */</script>
 <style>
 /* 레이아웃: 품목 탭 → 경고 배너 → 한 줄 결론 → 요약 수치 → 종가 차트 → 확률 예측 → 해설 → 갈림길.
    색은 한국 관행(상승 빨강, 하락 파랑). 밴드와 예측 범위는 잉크 투명도로 구분한다. */
 :root {
-  --bg: #eceff0;
-  --surface: #fcfcfb;
-  --ink: #0b0b0b;
-  --ink2: #52514e;
-  --muted: #6c6b66;
-  --line: #d9dad6;
-  --grid: #e8e9e5;
+  --bg: #e4f2fc;
+  --bggrad: linear-gradient(180deg, #cfe8fa 0, #e4f2fc 420px);
+  --surface: #ffffff;
+  --ink: #0e2233;
+  --ink2: #3f566a;
+  --muted: #6a8296;
+  --line: #cfe2f1;
+  --grid: #e3eef8;
   --up: #e34948;
   --down: #2a78d6;
   --ma1: #ff4d8d;
@@ -35,20 +37,20 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f;
-    --line: #34332f; --grid: #262624; --up: #e66767; --down: #3987e5;
+    --line: #34332f; --grid: #262624; --bggrad: none; --up: #e66767; --down: #3987e5;
     --ma1: #ff6fa3; --ma2: #ffb347; --ma3: #3ddc97; --ma4: #38d0f0; --acc: #7c7cff; --acc2: #c27bff; --bbu: #ff6b6b; --bbm: #9aa4bf; --bbd: #5ea0ff;
     --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f;
-  --line: #34332f; --grid: #262624; --up: #e66767; --down: #3987e5;
+  --line: #34332f; --grid: #262624; --bggrad: none; --up: #e66767; --down: #3987e5;
   --ma1: #ff6fa3; --ma2: #ffb347; --ma3: #3ddc97; --ma4: #38d0f0; --acc: #7c7cff; --acc2: #c27bff; --bbu: #ff6b6b; --bbm: #9aa4bf; --bbd: #5ea0ff;
   --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.6; padding-block: 28px 56px; padding-inline: 16px; }
+body { margin: 0; background: var(--bg) var(--bggrad) no-repeat; background-size: 100% 560px; color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.6; padding-block: 28px 56px; padding-inline: 16px; }
 .page { max-width: 1040px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
 h1, h2, h3, p { margin: 0; }
 .eyebrow { font: 500 12px/1.4 var(--mono); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; overflow-wrap: anywhere; }

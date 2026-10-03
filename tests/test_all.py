@@ -221,7 +221,7 @@ def test_js_model_matches_python(freq, tmp_path):  # JS와 파이썬 일치
 def test_resolve_item_variants():  # 품목 이름 해석
     assert resolve_item("AAMFI00")["key"] == "SM_CFR_CN"  # 코드
     assert resolve_item("sm_cfr_cn")["code"] == "AAMFI00"  # 키(소문자)
-    assert resolve_item("SM CFR 중국")["key"] == "SM_CFR_CN"  # 탭 이름
+    assert resolve_item("Styrene CFR China")["key"] == "SM_CFR_CN"  # 탭 이름
     assert resolve_item("ABS")["code"] == "PHAHF00"  # 짧은 키
 
 

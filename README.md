@@ -14,7 +14,7 @@ admin.html (비밀번호) ──저장──▶ Apps Script 웹앱 ──▶ 구
 - 가격 입력: `https://<계정>.github.io/chem-forecast-claude/admin.html`
 
 ## 표시 품목 (src/config.py 의 SHOW_CODES)
-NMCL001 WTI · PAAAD00 납사 · AAMFI00 SM CFR 중국 · AAOTU00 SM 동중국(위안) · AAOTM00 에틸렌 · PHASM05 벤젠 FOB 한국 · AAWWK00 프로필렌 · PHAOO00 AN(주간) · AAWWL00 BD CFR 중국 · PHAIL00 PS(주간) · PHAIR00 HIPS(주간) · PHAHF00 ABS(주간)
+NMCL001 WTI NYMEX · PAAAD00 Naphtha CFR Japan · AAMFI00 Styrene CFR China · AAOTU00 Styrene East China (CNY) · AAOTM00 Ethylene CFR NE Asia · PHASM05 Benzene FOB Korea · AAWWK00 프로필렌 · PHAOO00 AN(주간) · AAWWL00 BD CFR 중국 · PHAIL00 PS(주간) · PHAIR00 HIPS(주간) · PHAHF00 ABS(주간)
 
 품목을 바꾸려면 `SHOW_CODES` 를 고치고 시트 헤더에도 같은 코드를 둡니다(탭 이름은 `price` 또는 `prices`, 없으면 첫 번째 탭). 주간/일간은 같은 파일의 품목별 `freq` 한 글자(W/D)로 바꿉니다.
 
