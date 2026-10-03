@@ -1,0 +1,28 @@
+// 앱 모듈 빌드 설정: 웹페이지를 띄우는 껍데기 앱(외부 라이브러리 없음)
+plugins {
+    id 'com.android.application' // 안드로이드 앱 플러그인 적용
+}
+
+android {
+    namespace 'com.jskimlam.chemforecast' // 앱 패키지 이름
+    compileSdk 34                         // 컴파일 기준 안드로이드 버전
+
+    defaultConfig {
+        applicationId 'com.jskimlam.chemforecast' // 기기에서 앱을 구분하는 고유 ID
+        minSdk 24                                 // 지원하는 최소 안드로이드 버전(7.0)
+        targetSdk 34                              // 동작 기준 안드로이드 버전
+        versionCode 1                             // 내부 버전 번호
+        versionName '1.0'                         // 화면에 보이는 버전
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false // 코드 난독화는 사용하지 않음
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17 // 자바 17 문법 사용
+        targetCompatibility JavaVersion.VERSION_17 // 자바 17 문법 사용
+    }
+}

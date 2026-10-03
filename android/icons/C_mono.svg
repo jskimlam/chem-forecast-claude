@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f766e"/><stop offset="1" stop-color="#0891b2"/></linearGradient>
+    <linearGradient id="ar" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#fb923c"/></linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <!-- L 모노그램 -->
+  <path d="M250 170 L250 640 L560 640" fill="none" stroke="#fff" stroke-width="86" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 상승 화살 곡선 + 예측 점선 -->
+  <path d="M330 560 C440 540 480 440 590 430 C680 420 700 330 790 280" fill="none" stroke="url(#ar)" stroke-width="40" stroke-linecap="round"/>
+  <path d="M790 280 L880 240" fill="none" stroke="url(#ar)" stroke-width="40" stroke-linecap="round" stroke-dasharray="6 46"/>
+  <path d="M770 215 L905 205 L850 330 Z" fill="#fb923c"/>
+  <!-- 레벨 점선 -->
+  <line x1="610" y1="640" x2="880" y2="640" stroke="#fff" stroke-opacity=".55" stroke-width="12" stroke-dasharray="4 26" stroke-linecap="round"/>
+  <text x="512" y="880" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="150" fill="#fff">LAM <tspan font-weight="500" fill="#d1faf5">fcst</tspan></text>
+</svg>

@@ -1,0 +1,17 @@
+// 플러그인과 라이브러리를 받아올 저장소 지정
+pluginManagement {
+    repositories {
+        google()            // 안드로이드 플러그인 저장소
+        mavenCentral()      // 일반 라이브러리 저장소
+        gradlePluginPortal() // 그래들 플러그인 저장소
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS) // 모듈에서 저장소를 따로 지정하지 못하게 고정
+    repositories {
+        google()       // 안드로이드 라이브러리 저장소
+        mavenCentral() // 일반 라이브러리 저장소
+    }
+}
+rootProject.name = "ChemForecast" // 프로젝트 이름
+include ':app'                    // 앱 모듈 포함

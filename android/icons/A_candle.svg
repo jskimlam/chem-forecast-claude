@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f46e5"/><stop offset="1" stop-color="#a24bf0"/></linearGradient>
+    <linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <!-- 캔들 -->
+  <g stroke-linecap="round">
+    <line x1="260" y1="470" x2="260" y2="720" stroke="#6fb0ff" stroke-width="14"/><rect x="226" y="520" width="68" height="150" rx="14" fill="#6fb0ff"/>
+    <line x1="400" y1="400" x2="400" y2="690" stroke="#ff6b6b" stroke-width="14"/><rect x="366" y="450" width="68" height="190" rx="14" fill="#ff6b6b"/>
+    <line x1="540" y1="440" x2="540" y2="650" stroke="#6fb0ff" stroke-width="14"/><rect x="506" y="480" width="68" height="120" rx="14" fill="#6fb0ff"/>
+    <line x1="680" y1="330" x2="680" y2="620" stroke="#ff6b6b" stroke-width="14"/><rect x="646" y="370" width="68" height="200" rx="14" fill="#ff6b6b"/>
+    <line x1="820" y1="270" x2="820" y2="540" stroke="#ff6b6b" stroke-width="14"/><rect x="786" y="310" width="68" height="190" rx="14" fill="#ff6b6b"/>
+  </g>
+  <path d="M200 640 C320 600 360 520 470 530 C580 540 620 420 740 380 C800 360 840 330 880 290" fill="none" stroke="url(#gl)" stroke-width="22" stroke-linecap="round"/>
+  <text x="512" y="880" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="150" fill="#fff" letter-spacing="2">LAM <tspan font-weight="500" fill-opacity=".85">fcst</tspan></text>
+</svg>
