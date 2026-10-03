@@ -110,6 +110,16 @@ def build_bars(close: pd.Series, dates: pd.Series, series: pd.DataFrame) -> list
     return bars  # 봉 목록 반환
 
 
+def weekly_bars(s: pd.Series) -> pd.Series:  # 주간 봉 변환 함수
+    """일간으로 쌓인 가격을 주간 봉으로 줄입니다. 월~일 한 주 안의 마지막 값을 쓰고, 날짜는 그 값의 실제 날짜로 둡니다.
+    이미 주 1회만 있는 품목은 그대로이고, 가격이 매일 채워진 품목(주 단위로만 바뀌는 평가가격)은 한 주에 한 봉이 됩니다."""  # 함수 설명
+    s = s.dropna()  # 빈 값 제거
+    if s.empty:  # 비었으면
+        return s  # 그대로 반환
+    keep = s.groupby(s.index.to_period("W")).tail(1)  # 주마다 마지막 값 한 개
+    return keep.sort_index()  # 날짜순으로 반환
+
+
 def stale_info(last_date: pd.Timestamp, latest: pd.Timestamp, freq: str) -> tuple:  # 미갱신 판정 함수
     """기준일(전체 데이터의 최신 입력일) 대비 이 품목이 얼마나 늦는지 (미갱신 여부, 지연 일수)를 돌려줍니다."""  # 함수 설명
     if freq == "W":  # 주간이면
@@ -133,6 +143,8 @@ def build_item(item: dict, frame: pd.DataFrame, latest: pd.Timestamp, wt: float,
     win = cfg.WINDOWS[item["freq"]]  # 주기별 프리셋
     meta = base_meta(item, win)  # 기본 메타
     s = frame[item["code"]].dropna()  # 유효 가격
+    if item["freq"] == "W":  # 주간 품목이면
+        s = weekly_bars(s)  # 주 1봉으로 정리(일간으로 채워진 데이터도 안전하게 처리)
     need = min_bars_needed(win)  # 필요한 봉 수
     win_out = {k: (list(v) if isinstance(v, tuple) else v) for k, v in win.items()}  # JSON 변환 가능한 프리셋
     if len(s) < need:  # 봉이 부족하면

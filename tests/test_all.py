@@ -136,6 +136,26 @@ def test_next_dates_skip_weekend_and_weekly():  # 예측 날짜 규칙
     assert w == ["2026-10-09", "2026-10-16"]  # 7일 간격
 
 
+def test_weekly_bars_collapses_daily_filled_data():  # 일간으로 채워진 데이터를 주간 봉으로
+    from src.payload import weekly_bars  # 주간 봉 변환 함수
+    idx = pd.bdate_range("2026-09-14", periods=10)  # 2주치 영업일
+    s = pd.Series([1, 1, 1, 1, 2, 2, 2, 3, 3, 4], index=idx, dtype=float)  # 주 단위로만 바뀌는 가격
+    w = weekly_bars(s)  # 주간 변환
+    assert list(w.values) == [2.0, 4.0]  # 주마다 마지막 값
+    assert [d.strftime("%Y-%m-%d") for d in w.index] == ["2026-09-18", "2026-09-25"]  # 날짜는 그 값의 실제 날짜
+    sparse = pd.Series([10.0, 11.0], index=pd.to_datetime(["2026-09-16", "2026-09-23"]))  # 이미 주 1회인 데이터
+    assert list(weekly_bars(sparse).values) == [10.0, 11.0]  # 변화 없음
+    assert weekly_bars(pd.Series(dtype=float)).empty  # 빈 입력
+
+
+def test_weekly_items_get_weekly_presets():  # 주간 품목 지정 확인
+    freq = {it["key"]: it["freq"] for it in cfg.ITEMS}  # 키별 주기
+    for key in ("ABS", "PS", "HIPS", "AN_CFR_FE", "ETHYLENE", "PROPYLENE", "BD_CFR_CN"):  # 주간 가격 품목
+        assert freq[key] == "W", key  # 주간으로 지정됨
+    for key in ("WTI_NYMEX", "NAPHTHA", "BZ_FOB_KR", "SM_CFR_CN", "SM_EAST_CN"):  # 일간 품목
+        assert freq[key] == "D", key  # 일간 유지
+
+
 # ───────────────────────── 기존 WTI 앱 이식 검증 ─────────────────────────
 def load_wti_forecast():  # 기존 WTI 앱 forecast 모듈 불러오기
     """기존 WTI 앱의 src 패키지를 별도 이름으로 불러옵니다."""  # 함수 설명
