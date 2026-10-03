@@ -36,7 +36,7 @@ function load(sheet, props, opts) { // Code.gs 를 가짜 서비스와 함께 �
     CacheService: { getScriptCache: () => ({ get: k => (k in cacheStore ? cacheStore[k] : null), put: (k, v) => { cacheStore[k] = v; }, remove: k => { delete cacheStore[k]; } }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: t => ({ text: t, setMimeType() { return this; } }) },
-    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: n => (n === 'prices' ? sheet : null), getSheets: () => [sheet], getSpreadsheetTimeZone: () => 'Asia/Seoul' }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: n => (n === 'price' ? sheet : null), getSheets: () => [sheet], getSpreadsheetTimeZone: () => 'Asia/Seoul' }) },
     Utilities: { formatDate(d, tz, fmt) { // 'yyyy-MM-dd' 와 시각 형식만 흉내(하네스는 UTC 기준)
       const p = n => ('0' + n).slice(-2); const base = d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
       return fmt.indexOf('HH') >= 0 ? base + 'T' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ':' + p(d.getUTCSeconds()) : base; } },

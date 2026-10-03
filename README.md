@@ -16,10 +16,10 @@ admin.html (비밀번호) ──저장──▶ Apps Script 웹앱 ──▶ 구
 ## 표시 품목 (src/config.py 의 SHOW_CODES)
 NMCL001 WTI · PAAAD00 납사 · AAMFI00 SM CFR 중국 · AAOTU00 SM 동중국(위안) · AAOTM00 에틸렌 · PHASM05 벤젠 FOB 한국 · AAWWK00 프로필렌 · PHAOO00 AN(주간) · AAWWL00 BD CFR 중국 · PHAIL00 PS(주간) · PHAIR00 HIPS(주간) · PHAHF00 ABS(주간)
 
-품목을 바꾸려면 `SHOW_CODES` 를 고치고 시트 헤더에도 같은 코드를 둡니다. 주간/일간은 같은 파일의 품목별 `freq` 한 글자(W/D)로 바꿉니다.
+품목을 바꾸려면 `SHOW_CODES` 를 고치고 시트 헤더에도 같은 코드를 둡니다(탭 이름은 `price` 또는 `prices`, 없으면 첫 번째 탭). 주간/일간은 같은 파일의 품목별 `freq` 한 글자(W/D)로 바꿉니다.
 
 ## 최초 설정 (한 번만)
-1. **시트:** `prices` 탭 A1 에 `date`, B1부터 12개 코드를 두고 과거 데이터를 붙여 넣습니다. (날짜 오름차순, 주간 품목은 가격이 나온 날만 값)
+1. **시트:** `price` 탭 A1 에 `date`, B1부터 12개 코드를 두고 과거 데이터를 붙여 넣습니다. (날짜 오름차순, 주간 품목은 가격이 나온 날만 값)
 2. **Apps Script:** 시트에서 *확장 프로그램 > Apps Script* → `apps_script/Code.gs` 전체를 붙여 넣기.
    *프로젝트 설정 > 스크립트 속성*에 추가:
    - `ADMIN_PASSWORD` : 입력 페이지 비밀번호

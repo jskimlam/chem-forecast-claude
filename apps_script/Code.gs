@@ -13,7 +13,7 @@
  * 시트 양식: 첫 행은 헤더(A1 = date, B1부터 품목 코드), 둘째 행부터 날짜 오름차순 데이터.
  */
 
-var SHEET_NAME = 'prices'; // 가격 데이터가 있는 탭 이름(이 이름이 없으면 첫 번째 탭을 사용)
+var SHEET_NAMES = ['price', 'prices']; // 가격 데이터가 있는 탭 이름 후보(앞에서부터 찾고, 모두 없으면 첫 번째 탭을 사용)
 var TZ = 'Asia/Seoul'; // 오늘 날짜를 판단할 때 쓰는 시간대
 var BIG_MOVE = 0.25; // 직전 값 대비 이 비율을 넘게 변하면 경고(0.25 = 25%)
 var MAX_FAILS = 5; // 비밀번호·토큰을 연속으로 틀릴 수 있는 횟수
@@ -34,7 +34,11 @@ function jsonOut_(obj) {
 /** 가격 시트(탭)를 찾는 함수 */
 function getSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(); // 이 스크립트가 붙어 있는 스프레드시트
-  return ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0]; // 지정한 탭이 없으면 첫 번째 탭
+  for (var i = 0; i < SHEET_NAMES.length; i++) { // 이름 후보를 차례로 찾아서
+    var sh = ss.getSheetByName(SHEET_NAMES[i]); // 해당 이름의 탭
+    if (sh) return sh; // 있으면 사용
+  }
+  return ss.getSheets()[0]; // 모두 없으면 첫 번째 탭
 }
 
 /** 셀 값(날짜 또는 글자)을 'YYYY-MM-DD' 글자로 바꾸는 함수. 날짜로 읽을 수 없으면 빈 문자열 */
