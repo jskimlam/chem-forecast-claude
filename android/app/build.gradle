@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId 'com.jskimlam.chemforecast' // 기기에서 앱을 구분하는 고유 ID
-        minSdk 24                                 // 지원하는 최소 안드로이드 버전(7.0)
+        minSdk 29                                 // 지원하는 최소 안드로이드 버전(10, 사진 저장 방식 때문)
         targetSdk 34                              // 동작 기준 안드로이드 버전
         versionCode 1                             // 내부 버전 번호
         versionName '1.0'                         // 화면에 보이는 버전

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 아이콘 배경색(아이콘 B의 짙은 남색) -->
+<resources>
+    <color name="ic_launcher_background">#10142E</color>
+</resources>

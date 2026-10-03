@@ -7,15 +7,19 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
+        android:resizeableActivity="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="false">
 
-        <!-- 앱을 눌렀을 때 처음 뜨는 화면 -->
+        <!-- 앱을 눌렀을 때 처음 뜨는 화면
+             폴드를 접거나 펼쳐도(화면 크기·배치 변화) 앱이 다시 시작되지 않고 그대로 크기만 바뀌도록 configChanges 를 모두 지정 -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|density|uiMode|layoutDirection|fontScale"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

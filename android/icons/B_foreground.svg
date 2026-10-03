@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2145"/><stop offset="1" stop-color="#0b0f26"/></linearGradient>
+    <linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7c7cff"/><stop offset="1" stop-color="#d28bff"/></linearGradient>
+    <linearGradient id="fan" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a24bf0" stop-opacity=".15"/><stop offset="1" stop-color="#a24bf0" stop-opacity=".6"/></linearGradient>
+  </defs><g transform="translate(512 512) scale(0.7) translate(-512 -548)">
+  <g transform="translate(0,-55)">
+  <!-- 볼린저 밴드: 위 빨강, 아래 파랑 -->
+  <path d="M130 450 C260 380 340 330 470 360 C580 385 640 300 700 300 L700 470 C640 470 580 560 470 530 C340 500 260 560 130 590 Z" fill="#ef4444" fill-opacity=".14"/>
+  <path d="M130 590 C260 560 340 500 470 530 C580 560 640 470 700 470 L700 660 C640 660 580 740 470 710 C340 690 260 760 130 790 Z" fill="#2f7cf6" fill-opacity=".16"/>
+  <path d="M130 450 C260 380 340 330 470 360 C580 385 640 300 700 300" fill="none" stroke="#ff5a5a" stroke-width="16" stroke-linecap="round"/>
+  <path d="M130 790 C260 760 340 690 470 710 C580 740 640 660 700 660" fill="none" stroke="#4d92ff" stroke-width="16" stroke-linecap="round"/>
+  <path d="M130 590 C260 560 340 500 470 530 C580 560 640 470 700 470" fill="none" stroke="#8a94ad" stroke-width="10" stroke-dasharray="26 18" stroke-linecap="round"/>
+  <!-- 예측 팬 -->
+  <path d="M700 385 L900 240 L900 520 Z" fill="url(#fan)"/>
+  <!-- 종가선 -->
+  <path d="M130 520 C230 450 330 560 440 480 C540 410 600 520 700 385 C770 330 830 300 900 330" fill="none" stroke="url(#gl)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="700" cy="385" r="24" fill="#0b0f26" stroke="#d28bff" stroke-width="12"/>
+  </g>
+  <text x="512" y="905" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="150" fill="#fff">LAM <tspan font-weight="500" fill="#b7b9ff">fcst</tspan></text>
+</g></svg>
