@@ -20,7 +20,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3    # 안드로이드 SDK 설치
+      - name: 안드로이드 SDK 준비(러너에 설치돼 있는 SDK 사용, 라이선스 동의와 빌드 도구 확인)
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-34" "build-tools;34.0.0"
       - uses: gradle/actions/setup-gradle@v4      # 그래들 설치
         with:
           gradle-version: "8.7"
