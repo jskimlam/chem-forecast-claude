@@ -20,10 +20,12 @@
   --grid: #e8e9e5;
   --up: #e34948;
   --down: #2a78d6;
-  --ma1: #4a3aa7;
-  --ma2: #1baf7a;
-  --ma3: #eda100;
-  --ma4: #b5379a;
+  --ma1: #ff4d8d;
+  --ma2: #ff9f1c;
+  --ma3: #22b36b;
+  --ma4: #0aa5c9;
+  --acc: #5b5bf0; --acc2: #a24bf0;
+  --bbu: #ef4444; --bbm: #8a94ad; --bbd: #2f7cf6;
   --warn-bg: #fff4d6;
   --warn-ink: #5a4300;
   --warn-line: #e5c56a;
@@ -34,14 +36,14 @@
   :root:not([data-theme="light"]) {
     --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f;
     --line: #34332f; --grid: #262624; --up: #e66767; --down: #3987e5;
-    --ma1: #9085e9; --ma2: #199e70; --ma3: #c98500; --ma4: #d56fc0;
+    --ma1: #ff6fa3; --ma2: #ffb347; --ma3: #3ddc97; --ma4: #38d0f0; --acc: #7c7cff; --acc2: #c27bff; --bbu: #ff6b6b; --bbm: #9aa4bf; --bbd: #5ea0ff;
     --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f;
   --line: #34332f; --grid: #262624; --up: #e66767; --down: #3987e5;
-  --ma1: #9085e9; --ma2: #199e70; --ma3: #c98500; --ma4: #d56fc0;
+  --ma1: #ff6fa3; --ma2: #ffb347; --ma3: #3ddc97; --ma4: #38d0f0; --acc: #7c7cff; --acc2: #c27bff; --bbu: #ff6b6b; --bbm: #9aa4bf; --bbd: #5ea0ff;
   --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320; color-scheme: dark;
 }
 
@@ -72,7 +74,7 @@ header { display: block; }
 button { font: 500 13px/1 var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; cursor: pointer; min-height: 34px; }
 button:hover { border-color: var(--ink2); }
 button:focus-visible, .chartwrap:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-button[aria-pressed="true"].tg { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+button[aria-pressed="true"].tg { background: var(--acc); color: #fff; border-color: var(--acc); }
 .acts button { border-color: var(--ink2); }
 
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; font-size: 12px; color: var(--ink2); }
@@ -83,13 +85,14 @@ button[aria-pressed="true"].tg { background: var(--ink); color: var(--surface); 
 .cn.dn { background: var(--down); }
 .sw { display: inline-block; width: 20px; height: 0; border-top: 2px solid; }
 .sw.s1 { border-color: var(--ma1); }
-.sw.s2 { border-color: var(--ma2); border-top-style: dashed; }
+.sw.s2 { border-color: var(--ma2); }
 .sw.s3 { border-color: var(--ma3); }
 .sw.s4 { border-color: var(--ma4); border-top-width: 3px; }
-.bx { display: inline-block; width: 16px; height: 10px; border-radius: 2px; background: var(--ink); }
-.bx.b1 { opacity: .18; }
-.bx.b2 { opacity: .08; }
-.bx.bb { opacity: .12; box-shadow: inset 0 0 0 1px var(--ink2); }
+.bx { display: inline-block; width: 16px; height: 10px; border-radius: 2px; background: var(--acc); }
+.bx.b1 { background: var(--acc2); opacity: .45; }
+.bx.b2 { background: var(--acc); opacity: .22; }
+.bx.bb { background: linear-gradient(180deg, var(--bbu) 0%, var(--bbu) 38%, var(--bbd) 62%, var(--bbd) 100%); opacity: .55; box-shadow: none; }
+.sw.cl { width: 22px; height: 3px; border: 0; border-radius: 2px; background: linear-gradient(90deg, var(--acc), var(--acc2)); }
 
 .chartwrap { position: relative; margin-top: 8px; touch-action: pan-y; min-width: 0; }
 .chartwrap svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -98,34 +101,41 @@ button[aria-pressed="true"].tg { background: var(--ink); color: var(--surface); 
 .axis.fcd { fill: var(--ink2); font-weight: 500; }
 .lbl { font: 11px var(--sans); fill: var(--ink2); font-variant-numeric: tabular-nums; }
 .lbl.strong { fill: var(--ink); font-weight: 600; }
-.lvl { stroke: var(--ink2); stroke-width: 1; opacity: .7; }
+.lvl { stroke-width: 1.2; opacity: .8; }
+.lvl.R { stroke: var(--up); }
+.lvl.S { stroke: var(--down); }
+.lbl.R { fill: var(--up); font-weight: 600; }
+.lbl.S { fill: var(--down); font-weight: 600; }
 .lvl.R { stroke-dasharray: 6 4; }
 .lvl.S { stroke-dasharray: 2 4; }
 .tick { stroke: var(--ink2); stroke-width: 1; opacity: .6; }
-.band { fill: var(--ink); opacity: .1; }
-.hl { fill: none; stroke: var(--ink2); stroke-width: 1.5; stroke-dasharray: 2 3; }
-.ma { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.band { fill: var(--down); opacity: .13; }
+.hl { fill: none; stroke: var(--ma2); stroke-width: 1.8; stroke-dasharray: 4 3; }
+.ma { fill: none; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
 .ma1 { stroke: var(--ma1); }
-.ma2 { stroke: var(--ma2); stroke-dasharray: 7 4; }
+.ma2 { stroke: var(--ma2); }
 .ma3 { stroke: var(--ma3); }
-.ma4 { stroke: var(--ma4); stroke-width: 2.5; }
+.ma4 { stroke: var(--ma4); stroke-width: 2.2; }
 .rsiob { fill: var(--up); opacity: .10; }
 .rsios { fill: var(--down); opacity: .10; }
-.rsil { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
+.rsil { fill: none; stroke: var(--acc); stroke-width: 1.9; stroke-linejoin: round; stroke-linecap: round; }
 .subg { stroke: var(--ink2); stroke-width: 1; stroke-dasharray: 3 3; opacity: .6; }
 .subz { stroke: var(--ink2); stroke-width: 1; opacity: .8; }
-.mcl { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
-.msl { fill: none; stroke: var(--ink2); stroke-width: 1.6; stroke-dasharray: 5 3; stroke-linejoin: round; }
-.hup { fill: var(--up); opacity: .55; }
-.hdn { fill: var(--down); opacity: .55; }
-.bbf { fill: var(--ink); opacity: .08; }
-.bbl { fill: none; stroke: var(--ink2); stroke-width: 1.5; opacity: .85; }
-.bbm { fill: none; stroke: var(--ink2); stroke-width: 1; stroke-dasharray: 4 3; opacity: .7; }
-.fz { fill: var(--ink); opacity: .035; }
-.fsep { stroke: var(--ink2); stroke-width: 1; stroke-dasharray: 2 3; opacity: .7; }
-.fan2 { fill: var(--ink); opacity: .08; }
-.fan1 { fill: var(--ink); opacity: .14; }
-.fcl { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 5 3; }
+.mcl { fill: none; stroke: var(--bbd); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.msl { fill: none; stroke: var(--ma2); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.hup { fill: var(--up); opacity: .7; }
+.hdn { fill: var(--down); opacity: .7; }
+.bbfu { fill: var(--bbu); opacity: .11; }
+.bbfd { fill: var(--bbd); opacity: .11; }
+.bbl { fill: none; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.bbl.u { stroke: var(--bbu); }
+.bbl.d { stroke: var(--bbd); }
+.bbm { fill: none; stroke: var(--bbm); stroke-width: 1.3; stroke-dasharray: 5 3; stroke-linejoin: round; }
+.fz { fill: var(--acc); opacity: .05; }
+.fsep { stroke: var(--acc); stroke-width: 1.2; stroke-dasharray: 3 3; opacity: .7; }
+.fan2 { fill: var(--acc); opacity: .12; }
+.fan1 { fill: var(--acc2); opacity: .22; }
+.fcl { fill: none; stroke: var(--acc2); stroke-width: 2.2; stroke-dasharray: 6 4; stroke-linejoin: round; stroke-linecap: round; }
 .rollmk { fill: var(--ink2); }
 .up .wick { stroke: var(--up); }
 .up .body, .up .vol { fill: var(--up); }
@@ -280,9 +290,9 @@ h3 { font-size: 14px; font-weight: 600; }
 .tab .tchg.up { color: var(--up); }
 .tab .tchg.dn { color: var(--down); }
 .tab .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ma3); display: inline-block; }
-.tab[aria-selected="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-.tab[aria-selected="true"] .cnt { color: var(--surface); opacity: .75; }
-.tab[aria-selected="true"] .tchg.up, .tab[aria-selected="true"] .tchg.dn { color: var(--surface); }
+.tab[aria-selected="true"] { background: linear-gradient(135deg, var(--acc), var(--acc2)); color: #fff; border-color: transparent; }
+.tab[aria-selected="true"] .cnt { color: #fff; opacity: .8; }
+.tab[aria-selected="true"] .tchg.up, .tab[aria-selected="true"] .tchg.dn { color: #fff; }
 .tabrow.items .tab { font-weight: 400; }
 .tabrow.items .tab[aria-selected="true"] { font-weight: 600; }
 
@@ -309,8 +319,13 @@ h3 { font-size: 14px; font-weight: 600; }
 .banner.err { background: #fde8e8; color: #6b1414; border-color: #e5a0a0; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .banner.err { background: #3a1616; color: #f3c4c4; border-color: #7a2a2a; } }
 :root[data-theme="dark"] .banner.err { background: #3a1616; color: #f3c4c4; border-color: #7a2a2a; }
-.line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.dotp { fill: var(--ink); }
+.adminlink { position: fixed; right: 14px; bottom: 14px; z-index: 30; display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; font: 600 13px/1 var(--sans); color: #fff; background: linear-gradient(135deg, var(--acc), var(--acc2)); text-decoration: none; box-shadow: 0 4px 14px rgba(91,91,240,.35); }
+.adminlink:hover { filter: brightness(1.08); }
+.adminlink:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.line { fill: none; stroke: url(#gLine); stroke-width: 2.8; stroke-linejoin: round; stroke-linecap: round; }
+.area { stroke: none; }
+.dotp { fill: var(--surface); stroke: var(--acc2); stroke-width: 3; }
+.halo { fill: var(--acc2); opacity: .22; }
 .off-ma .g-ma, .off-lv .g-lv, .off-pt .g-pt, .off-bb .g-bb, .off-fc .g-fc { display: none; }
 @media (max-width: 640px) {
   .tabs { padding-inline: 12px; margin-inline: -16px; }
@@ -324,6 +339,8 @@ h3 { font-size: 14px; font-weight: 600; }
     <div class="tabrow" id="grp-row" role="tablist" aria-label="품목 그룹"></div>
     <div class="tabrow items" id="itm-row" role="tablist" aria-label="품목"></div>
   </nav>
+
+  <a class="adminlink" href="admin.html" title="가격 입력 페이지(비밀번호 필요)">🔐 관리자</a>
 
   <!-- 전체 요약: 표시 품목을 한 표로 비교. 행을 누르면 해당 품목 탭으로 이동 -->
   <section id="overview" aria-label="전체 요약" hidden>
@@ -657,7 +674,7 @@ var CHEMDATA = __CHEM_DATA__;
   }
   function updateLegend() {
     var bbNote = NA >= WIN.bb ? '볼린저 ' + WIN.bb + U + '·2σ' : '볼린저 (봉 부족)';
-    var h = '<span class="lg"><i class="sw s4" style="border-color:var(--ink)"></i>평가가격(종가)</span>' +
+    var h = '<span class="lg"><i class="sw cl"></i>평가가격(종가)</span>' +
       '<span class="lg"><i class="bx bb"></i>' + bbNote + '</span>' +
       '<span class="lg"><i class="bx b1"></i>예측 1σ</span>' +
       '<span class="lg"><i class="bx b2"></i>예측 2σ</span>';
@@ -856,7 +873,7 @@ var CHEMDATA = __CHEM_DATA__;
   }
 
   // ── 캡처 모드: 공유용 카드(SVG → PNG) ────────────────────────
-  var CAP = { ink: '#111111', grey: '#666660', line: '#d9dad6', up: '#e34948', dn: '#2a78d6', fl: '#8a8a85', bg: '#ffffff' };
+  var CAP = { acc: '#5b5bf0', ink: '#111111', grey: '#666660', line: '#d9dad6', up: '#e34948', dn: '#2a78d6', fl: '#8a8a85', bg: '#ffffff' };
   var CAP_FONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif';
   function charW(ch, fs) {
     var c = ch.charCodeAt(0);
@@ -953,9 +970,9 @@ var CHEMDATA = __CHEM_DATA__;
       out += svgText(labX, ty.toFixed(1), fl(o.l.v) + ' ' + o.l.label, 19, col, 700);
     });
     var pts = hist.map(function (v, idx) { return X(idx).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ');
-    out += '<polyline points="' + pts + '" fill="none" stroke="' + CAP.ink + '" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>';
-    out += '<polyline points="' + cen.join(' ') + '" fill="none" stroke="' + CAP.ink + '" stroke-width="2.5" stroke-dasharray="6 6"/>';
-    out += '<circle cx="' + xl.toFixed(1) + '" cy="' + yl.toFixed(1) + '" r="7" fill="' + CAP.ink + '"/>';
+    out += '<polyline points="' + pts + '" fill="none" stroke="' + CAP.acc + '" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>';
+    out += '<polyline points="' + cen.join(' ') + '" fill="none" stroke="#a24bf0" stroke-width="3" stroke-dasharray="6 6"/>';
+    out += '<circle cx="' + xl.toFixed(1) + '" cy="' + yl.toFixed(1) + '" r="7" fill="' + CAP.acc + '"/>';
     var dA = mkDay(ALL[ALL.length - NH].date), dZ = ALL[ALL.length - 1], dF = FD[NF - 1];
     out += svgText(plotL, plotB + 26, dA.m + '/' + dA.d, 20, CAP.grey, 0, 'start');
     out += svgText(xl.toFixed(1), plotB + 26, dZ.m + '/' + dZ.d, 20, CAP.ink, 700, 'middle');
@@ -1084,6 +1101,29 @@ var CHEMDATA = __CHEM_DATA__;
     return -1;
   }
 
+  // 부드러운 곡선(단조 3차 보간): 점 사이를 곡선으로 잇되 값이 튀어 오르거나 꺼지지 않게 한다
+  function curve(pts) {
+    var n = pts.length, i;
+    if (!n) return '';
+    var d = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+    if (n === 1) return d;
+    if (n === 2) return d + 'L' + pts[1][0].toFixed(1) + ' ' + pts[1][1].toFixed(1);
+    var dx = [], sl = [], t = [];
+    for (i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; sl[i] = dx[i] ? (pts[i + 1][1] - pts[i][1]) / dx[i] : 0; }
+    t[0] = sl[0]; t[n - 1] = sl[n - 2];
+    for (i = 1; i < n - 1; i++) t[i] = sl[i - 1] * sl[i] <= 0 ? 0 : (sl[i - 1] + sl[i]) / 2;
+    for (i = 0; i < n - 1; i++) {
+      if (sl[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+      var a = t[i] / sl[i], b = t[i + 1] / sl[i], h = a * a + b * b;
+      if (h > 9) { var k3 = 3 / Math.sqrt(h); t[i] = k3 * a * sl[i]; t[i + 1] = k3 * b * sl[i]; }
+    }
+    for (i = 0; i < n - 1; i++) {
+      var x1 = pts[i][0] + dx[i] / 3, y1 = pts[i][1] + t[i] * dx[i] / 3, x2 = pts[i + 1][0] - dx[i] / 3, y2 = pts[i + 1][1] - t[i + 1] * dx[i] / 3;
+      d += 'C' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' ' + x2.toFixed(1) + ' ' + y2.toFixed(1) + ' ' + pts[i + 1][0].toFixed(1) + ' ' + pts[i + 1][1].toFixed(1);
+    }
+    return d;
+  }
+
   function render() {
     if (!CUR || !DATA || DATA.error || !MODEL) return;
     var W = Math.max(300, Math.floor(wrap.clientWidth));
@@ -1120,7 +1160,9 @@ var CHEMDATA = __CHEM_DATA__;
     var s = '';
 
     s += '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(DATA.meta.label) + ' 종가 차트와 ' + fd(FD[0]) + '부터 ' + fd(FD[NF - 1]) + '까지의 예측 밴드' + (SUB ? ', RSI와 MACD 패널' : '') + '. 마지막 종가 ' + fx(P0) + '">';
-    s += '<defs><clipPath id="pclip"><rect x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '"/></clipPath></defs>';
+    s += '<defs><clipPath id="pclip"><rect x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '"/></clipPath>' +
+      '<linearGradient id="gLine" gradientUnits="userSpaceOnUse" x1="' + m.l + '" y1="0" x2="' + xr + '" y2="0"><stop offset="0" stop-color="var(--acc)"/><stop offset="1" stop-color="var(--acc2)"/></linearGradient>' +
+      '<linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--acc)" stop-opacity=".20"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0"/></linearGradient></defs>';
 
     for (gi = 0; gi <= nGrid; gi++) {
       var gv = YMIN + gi * gs;
@@ -1141,7 +1183,7 @@ var CHEMDATA = __CHEM_DATA__;
     // 레벨 라벨 위치 (겹치면 아래로 밀어냄)
     var band = PAT.floor_band;
     var labs = shown.map(function (l) {
-      return { y: Y(l.v), ty: Y(l.v), text: narrow ? fl(l.v) : fl(l.v) + ' ' + l.label, kind: 'lv' };
+      return { y: Y(l.v), ty: Y(l.v), text: narrow ? fl(l.v) : fl(l.v) + ' ' + l.label, kind: 'lv', lk: l.kind };
     });
     if (band) labs.push({ y: Y((band.lo + band.hi) / 2), ty: Y((band.lo + band.hi) / 2), text: narrow ? fl(band.lo) : fl(band.lo) + '–' + fl(band.hi) + ' 바닥', kind: 'band' });
     labs.sort(function (a, b) { return a.y - b.y; });
@@ -1172,52 +1214,52 @@ var CHEMDATA = __CHEM_DATA__;
     });
     labs.filter(function (x) { return x.kind === 'lv'; }).forEach(function (x) {
       s += '<line class="tick" x1="' + xr + '" x2="' + (xr + 6) + '" y1="' + x.ty + '" y2="' + x.y + '"/>';
-      s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (x.y + 4) + '">' + esc(x.text) + '</text>';
+      s += '<text class="lbl ' + (x.lk || '') + '" x="' + (xr + 9) + '" y="' + (x.y + 4) + '">' + esc(x.text) + '</text>';
     });
     s += '</g>';
 
     // 볼린저밴드 (bb봉 이상부터 계산된 구간)
-    var up = '', lw = '', md = '', fill = '', idx = [];
+    var idx = [];
     for (var bi = 0; bi < N; bi++) if (BBS[bi]) idx.push(bi);
-    idx.forEach(function (bi2, n2) {
-      var b = BBS[bi2];
-      up += (n2 ? 'L' : 'M') + X(bi2) + ' ' + Y(b.up);
-      lw += (n2 ? 'L' : 'M') + X(bi2) + ' ' + Y(b.lo);
-      md += (n2 ? 'L' : 'M') + X(bi2) + ' ' + Y(b.mid);
-    });
     if (idx.length) {
-      fill = up;
-      for (var bj = idx.length - 1; bj >= 0; bj--) fill += 'L' + X(idx[bj]) + ' ' + Y(BBS[idx[bj]].lo);
-      fill += 'Z';
-      s += '<g class="layer g-bb"><path class="bbf" d="' + fill + '"/><path class="bbl" d="' + up + '"/><path class="bbl" d="' + lw + '"/><path class="bbm" d="' + md + '"/></g>';
+      var pu = idx.map(function (b) { return [X(b), Y(BBS[b].up)]; });
+      var pm = idx.map(function (b) { return [X(b), Y(BBS[b].mid)]; });
+      var pl = idx.map(function (b) { return [X(b), Y(BBS[b].lo)]; });
+      var rev = function (a) { return a.slice().reverse(); };
+      var cu = curve(pu), cm = curve(pm), cl2 = curve(pl);
+      var back = function (pts) { return curve(rev(pts)).replace(/^M[^C]*/, 'L' + pts[pts.length - 1][0].toFixed(1) + ' ' + pts[pts.length - 1][1].toFixed(1)); };
+      var fillU = cu + back(pm).replace(/^L[^C]*/, 'L' + pm[pm.length - 1][0].toFixed(1) + ' ' + pm[pm.length - 1][1].toFixed(1)) + 'Z';
+      var fillD = cm + back(pl).replace(/^L[^C]*/, 'L' + pl[pl.length - 1][0].toFixed(1) + ' ' + pl[pl.length - 1][1].toFixed(1)) + 'Z';
+      s += '<g class="layer g-bb"><path class="bbfu" d="' + fillU + '"/><path class="bbfd" d="' + fillD + '"/>' +
+        '<path class="bbl u" d="' + cu + '"/><path class="bbl d" d="' + cl2 + '"/><path class="bbm" d="' + cm + '"/></g>';
     }
 
     // 예측 팬
     function fan(topKey, botKey) {
-      var d = 'M' + x0 + ' ' + Y(P0);
-      FC.forEach(function (r, kk) { d += 'L' + X(N + kk) + ' ' + Y(r[topKey]); });
-      for (var kk2 = FC.length - 1; kk2 >= 0; kk2--) d += 'L' + X(N + kk2) + ' ' + Y(FC[kk2][botKey]);
-      return d + 'Z';
+      var top = [[x0, Y(P0)]], bot = [[x0, Y(P0)]];
+      FC.forEach(function (r, kk) { top.push([X(N + kk), Y(r[topKey])]); bot.push([X(N + kk), Y(r[botKey])]); });
+      var dTop = curve(top), dBot = curve(bot.slice().reverse());
+      return dTop + 'L' + bot[bot.length - 1][0].toFixed(1) + ' ' + bot[bot.length - 1][1].toFixed(1) + dBot.replace(/^M[^C]*/, '') + 'Z';
     }
-    var cl = 'M' + x0 + ' ' + Y(P0);
-    FC.forEach(function (r, kk) { cl += 'L' + X(N + kk) + ' ' + Y(r.center); });
+    var cpts = [[x0, Y(P0)]];
+    FC.forEach(function (r, kk) { cpts.push([X(N + kk), Y(r.center)]); });
+    var cl = curve(cpts);
     s += '<g class="layer g-fc"><path class="fan2" d="' + fan('hi2', 'lo2') + '"/><path class="fan1" d="' + fan('hi1', 'lo1') + '"/><path class="fcl" d="' + cl + '"/></g>';
 
     // 종가선과 마지막 점
-    var cp = '';
-    D.forEach(function (d, ci) { cp += (ci ? 'L' : 'M') + X(ci) + ' ' + Y(d.c); });
+    var cpp = D.map(function (d, ci) { return [X(ci), Y(d.c)]; });
+    var cp = curve(cpp);
+    s += '<path class="area" fill="url(#gArea)" clip-path="url(#pclip)" d="' + cp + 'L' + X(N - 1).toFixed(1) + ' ' + mainBot + 'L' + X(0).toFixed(1) + ' ' + mainBot + 'Z"/>';
     s += '<path class="line" d="' + cp + '"/>';
-    s += '<circle class="dotp" cx="' + x0 + '" cy="' + Y(D[N - 1].c) + '" r="3.5"/>';
+    s += '<circle class="halo" cx="' + x0 + '" cy="' + Y(D[N - 1].c) + '" r="9"/>';
+    s += '<circle class="dotp" cx="' + x0 + '" cy="' + Y(D[N - 1].c) + '" r="4.5"/>';
 
     // 이동평균(가격 범위 밖으로 나가도 차트 영역 안에서만 그림)
     s += '<g class="layer g-ma" clip-path="url(#pclip)">';
     MAS.forEach(function (arr, ix) {
-      var d = '';
-      arr.forEach(function (v, mi) {
-        if (v == null) return;
-        d += (d ? 'L' : 'M') + X(mi) + ' ' + Y(v);
-      });
-      s += '<path class="ma ma' + (ix + 1) + '" d="' + d + '"/>';
+      var mp = [];
+      arr.forEach(function (v, mi) { if (v != null) mp.push([X(mi), Y(v)]); });
+      s += '<path class="ma ma' + (ix + 1) + '" d="' + curve(mp) + '"/>';
     });
     s += '</g>';
 
@@ -1232,9 +1274,9 @@ var CHEMDATA = __CHEM_DATA__;
         if (v !== 50) s += '<text class="axis" x="' + (m.l - 6) + '" y="' + (RY(v) + 4) + '" text-anchor="end">' + v + '</text>';
       });
       s += '<line class="grid" x1="' + m.l + '" x2="' + xr + '" y1="' + rsiBot + '" y2="' + rsiBot + '"/>';
-      var rd = '';
-      D.forEach(function (d, ri) { if (d.rsi != null) rd += (rd ? 'L' : 'M') + X(ri) + ' ' + RY(d.rsi); });
-      if (rd) s += '<path class="rsil" d="' + rd + '"/>';
+      var rp = [];
+      D.forEach(function (d, ri) { if (d.rsi != null) rp.push([X(ri), RY(d.rsi)]); });
+      if (rp.length) s += '<path class="rsil" d="' + curve(rp) + '"/>';
       var lastD = D[N - 1];
       s += '<text class="lbl strong" x="' + (xr + 9) + '" y="' + (rsiTop + 11) + '">' + (narrow ? 'RSI' : 'RSI(' + WIN.rsi + ')') + '</text>';
       s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (rsiTop + 26) + '">' + (lastD.rsi == null ? '–' : lastD.rsi.toFixed(1)) + '</text>';
@@ -1259,13 +1301,13 @@ var CHEMDATA = __CHEM_DATA__;
         var y1 = MY(0), y2 = MY(d.hist), bw = Math.max(2, Math.min(14, step * 0.58));
         s += '<rect class="' + (d.hist >= 0 ? 'hup' : 'hdn') + '" x="' + (X(hi2) - bw / 2) + '" y="' + Math.min(y1, y2) + '" width="' + bw + '" height="' + Math.max(1, Math.abs(y2 - y1)) + '"/>';
       });
-      var md2 = '', sd2 = '';
+      var mpt = [], spt = [];
       D.forEach(function (d, mi2) {
-        if (d.macd != null) md2 += (md2 ? 'L' : 'M') + X(mi2) + ' ' + MY(d.macd);
-        if (d.sig != null) sd2 += (sd2 ? 'L' : 'M') + X(mi2) + ' ' + MY(d.sig);
+        if (d.macd != null) mpt.push([X(mi2), MY(d.macd)]);
+        if (d.sig != null) spt.push([X(mi2), MY(d.sig)]);
       });
-      if (md2) s += '<path class="mcl" d="' + md2 + '"/>';
-      if (sd2) s += '<path class="msl" d="' + sd2 + '"/>';
+      if (mpt.length) s += '<path class="mcl" d="' + curve(mpt) + '"/>';
+      if (spt.length) s += '<path class="msl" d="' + curve(spt) + '"/>';
       s += '<text class="lbl strong" x="' + (xr + 9) + '" y="' + (macdTop + 11) + '">' + (narrow ? 'MACD' : 'MACD(' + WIN.macd.join(',') + ')') + '</text>';
       s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (macdTop + 26) + '">' + (lastD.macd == null ? '–' : sm(lastD.macd)) + '</text>';
       if (narrow) {
