@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>가격 입력</title>
+<style>
+/* 레이아웃: 연결(주소·비밀번호) → 날짜 → 품목별 입력 줄(직전 가격 옆에 입력칸) → 저장 → 결과.
+   색은 한국 관행(상승 빨강, 하락 파랑)을 따르고, 경고는 노랑 계열로 따로 둔다. */
+:root {
+  --bg: #eceff0;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink2: #52514e;
+  --muted: #6c6b66;
+  --line: #d9dad6;
+  --up: #d23c3b;
+  --down: #2a78d6;
+  --accent: #14342f;
+  --accent-ink: #ffffff;
+  --warn-bg: #fff4d6;
+  --warn-ink: #5a4300;
+  --warn-line: #e5c56a;
+  --ok-bg: #e3f3e8;
+  --ok-ink: #14532d;
+  --err-bg: #fde8e8;
+  --err-ink: #7a1f1f;
+  --sans: system-ui, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f; --line: #34332f;
+    --up: #e66767; --down: #3987e5; --accent: #7fd1bd; --accent-ink: #0b1f1b;
+    --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320;
+    --ok-bg: #12301d; --ok-ink: #a7e3b9; --err-bg: #3b1616; --err-ink: #f3b4b4; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f; --line: #34332f;
+  --up: #e66767; --down: #3987e5; --accent: #7fd1bd; --accent-ink: #0b1f1b;
+  --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320;
+  --ok-bg: #12301d; --ok-ink: #a7e3b9; --err-bg: #3b1616; --err-ink: #f3b4b4; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); }
+.page { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+.sub { margin: 4px 0 0; color: var(--ink2); font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card h2 { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+.f { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink2); min-width: 0; }
+input[type="text"], input[type="password"], input[type="date"], input[type="url"] {
+  font: 16px var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; width: 100%; min-width: 0;
+}
+input:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: 600 14px var(--sans); border-radius: 6px; padding: 9px 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: default; }
+.status { font-size: 13px; color: var(--ink2); min-height: 1.4em; }
+.group { display: flex; flex-direction: column; }
+.group > .gname { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; padding: 8px 0 4px; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 150px); gap: 4px 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.item .name { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.item .meta { grid-column: 1; font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.item .meta .chip { font: 600 11px var(--sans); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--ink2); margin-left: 4px; }
+.item input { grid-column: 2; grid-row: 1 / span 2; text-align: right; font: 16px var(--mono); font-variant-numeric: tabular-nums; }
+.item .chg { grid-column: 1 / -1; font: 12px var(--mono); min-height: 1.2em; font-variant-numeric: tabular-nums; }
+.chg.up { color: var(--up); } .chg.down { color: var(--down); } .chg.big { color: var(--warn-ink); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 4px; padding: 1px 6px; width: fit-content; }
+.box { border-radius: 8px; padding: 12px 14px; font-size: 14px; border: 1px solid transparent; }
+.box ul { margin: 6px 0 0; padding-left: 18px; }
+.box.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: var(--warn-line); }
+.box.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.box.err { background: var(--err-bg); color: var(--err-ink); }
+.hint { font-size: 12px; color: var(--muted); }
+details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
+@media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <h1>가격 입력</h1>
+    <p class="sub">입력한 가격은 구글시트에 저장되고, 대시보드는 자동으로 다시 만들어집니다. 빈 칸은 저장하지 않고 건너뜁니다.</p>
+  </header>
+
+  <section class="card" aria-label="연결">
+    <h2>연결</h2>
+    <details id="urlbox">
+      <summary>웹앱 주소 설정</summary>
+      <label class="f" style="margin-top:8px">웹앱 주소 (Apps Script 배포 URL, /exec 로 끝남)
+        <input type="url" id="gasurl" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
+      </label>
+    </details>
+    <label class="f">비밀번호
+      <input type="password" id="pw" autocomplete="current-password" placeholder="입력 비밀번호">
+    </label>
+    <div class="btns">
+      <button type="button" id="btn-load">직전 가격 불러오기</button>
+      <span class="status" id="load-status" role="status"></span>
+    </div>
+  </section>
+
+  <section class="card" aria-label="날짜">
+    <h2>날짜</h2>
+    <div class="row2">
+      <label class="f">가격 기준일
+        <input type="date" id="date">
+      </label>
+      <div class="f"><span>요일</span><span id="dow" style="padding:9px 0;font-weight:600"></span></div>
+    </div>
+    <p class="hint">주간 품목(AN·ABS·PS·HIPS)은 가격이 나온 날짜에만 입력하세요. 같은 날짜에 다시 저장하면 해당 품목만 덮어씁니다.</p>
+  </section>
+
+  <section class="card" aria-label="가격">
+    <h2>가격</h2>
+    <div id="items"></div>
+  </section>
+
+  <div id="warnbox" class="box warn" hidden></div>
+  <div class="btns">
+    <button type="button" class="primary" id="btn-save">저장</button>
+    <button type="button" id="btn-confirm" hidden>경고를 확인했습니다. 그래도 저장</button>
+    <button type="button" id="btn-clear">입력칸 비우기</button>
+  </div>
+  <div id="result" class="box" hidden role="status"></div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var GAS_URL = __GAS_URL__; // 빌드할 때 심는 웹앱 주소(비어 있으면 화면에서 직접 입력)
+  var ITEMS = __ITEMS_JSON__; // 빌드할 때 심는 품목 목록 [{code,key,label,group,groupLabel,freq,unit}]
+  var BIG = 0.25; // 직전 대비 이 비율을 넘으면 입력칸에 경고 표시
+  var LAST = {}; // 코드 → {date, price} (불러온 직전 가격)
+  var els = {};
+  ['gasurl', 'pw', 'date', 'dow', 'items', 'btn-load', 'btn-save', 'btn-confirm', 'btn-clear', 'load-status', 'warnbox', 'result', 'urlbox'].forEach(function (id) { els[id] = document.getElementById(id); });
+
+  function store(kind, key, val) { // 브라우저 저장소 읽기/쓰기(막혀 있어도 동작하도록 try)
+    try { var s = kind === 'local' ? window.localStorage : window.sessionStorage; if (val === undefined) return s.getItem(key) || ''; s.setItem(key, val); } catch (e) { return ''; }
+    return '';
+  }
+  function kstToday() { // 한국 시간 기준 오늘 날짜(YYYY-MM-DD)
+    var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    return p;
+  }
+  var WD = ['일', '월', '화', '수', '목', '금', '토'];
+  function showDow() { // 선택한 날짜의 요일 표시
+    var v = els.date.value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { els.dow.textContent = ''; return; }
+    var d = new Date(v + 'T00:00:00Z').getUTCDay();
+    els.dow.textContent = WD[d] + '요일' + (d === 0 || d === 6 ? ' (주말)' : '');
+  }
+  function fmt(n) { // 천 단위 쉼표 + 필요한 소수 자릿수
+    if (n === null || n === undefined || !isFinite(n)) return '-';
+    var dg = Math.abs(n) >= 1000 ? 0 : Math.abs(n) >= 100 ? 1 : 2;
+    if (Math.abs(n - Math.round(n)) > 1e-9 && dg === 0) dg = 1;
+    return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: Math.max(dg, 2) });
+  }
+  function num(text) { // 입력 글자를 숫자로(쉼표 제거). 비면 null, 이상하면 NaN
+    var t = String(text || '').replace(/,/g, '').trim();
+    if (t === '') return null;
+    return /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : NaN;
+  }
+
+  function buildItems() { // 품목별 입력 줄 만들기
+    var groups = [], seen = {};
+    ITEMS.forEach(function (it) { if (!seen[it.group]) { seen[it.group] = { label: it.groupLabel, items: [] }; groups.push(seen[it.group]); } seen[it.group].items.push(it); });
+    els.items.textContent = '';
+    groups.forEach(function (g) {
+      var box = document.createElement('div'); box.className = 'group';
+      var gn = document.createElement('div'); gn.className = 'gname'; gn.textContent = g.label; box.appendChild(gn);
+      g.items.forEach(function (it) {
+        var row = document.createElement('div'); row.className = 'item'; row.dataset.code = it.code;
+        var name = document.createElement('div'); name.className = 'name'; name.textContent = it.label;
+        var meta = document.createElement('div'); meta.className = 'meta'; meta.id = 'meta-' + it.code;
+        meta.textContent = it.code + ' · ' + it.unit;
+        if (it.freq === 'W') { var chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = '주간'; meta.appendChild(chip); }
+        var inp = document.createElement('input'); inp.type = 'text'; inp.inputMode = 'decimal'; inp.autocomplete = 'off'; inp.id = 'in-' + it.code; inp.setAttribute('aria-label', it.label + ' 가격');
+        var chg = document.createElement('div'); chg.className = 'chg'; chg.id = 'chg-' + it.code;
+        inp.addEventListener('input', function () { showChange(it.code); });
+        row.appendChild(name); row.appendChild(inp); row.appendChild(meta); row.appendChild(chg);
+        box.appendChild(row);
+      });
+      els.items.appendChild(box);
+    });
+  }
+  function showChange(code) { // 입력값과 직전 가격의 차이 표시
+    var out = document.getElementById('chg-' + code), v = num(document.getElementById('in-' + code).value), last = LAST[code];
+    out.className = 'chg'; out.textContent = '';
+    if (v === null) return;
+    if (isNaN(v)) { out.textContent = '숫자로 읽을 수 없습니다'; out.classList.add('big'); return; }
+    if (!last || !(last.price > 0)) return;
+    var c = v / last.price - 1;
+    out.textContent = (c >= 0 ? '▲ +' : '▼ ') + (c * 100).toFixed(2) + '% (직전 ' + fmt(last.price) + ')';
+    out.classList.add(Math.abs(c) > BIG ? 'big' : (c >= 0 ? 'up' : 'down'));
+    if (Math.abs(c) > BIG) out.textContent += ' · 급변동';
+  }
+  function showLast() { // 불러온 직전 가격을 각 줄에 표시
+    ITEMS.forEach(function (it) {
+      var meta = document.getElementById('meta-' + it.code), last = LAST[it.code];
+      var chip = it.freq === 'W' ? ' · 주간' : '';
+      meta.textContent = it.code + ' · ' + it.unit + (last ? ' · 직전 ' + fmt(last.price) + ' (' + last.date.slice(5) + ')' : ' · 직전 값 없음') + chip;
+      showChange(it.code);
+    });
+  }
+
+  function box(el, kind, title, lines) { // 결과·경고 상자 그리기
+    el.className = 'box ' + kind; el.hidden = false; el.textContent = '';
+    var b = document.createElement('strong'); b.textContent = title; el.appendChild(b);
+    if (lines && lines.length) { var ul = document.createElement('ul'); lines.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); el.appendChild(ul); }
+  }
+  function url() { return (GAS_URL || els.gasurl.value || '').trim(); }
+
+  function call(payload) { // 웹앱에 요청 보내기(본문은 text/plain 이라 사전 요청 없이 전달됨)
+    var u = url();
+    if (!u) return Promise.reject(new Error('웹앱 주소를 먼저 입력하세요. ("웹앱 주소 설정"을 펼치세요)'));
+    return fetch(u, { method: 'POST', body: JSON.stringify(payload) }).then(function (r) { return r.text(); }).then(function (t) {
+      try { return JSON.parse(t); } catch (e) { throw new Error('응답을 읽지 못했습니다. 배포 설정의 액세스 권한이 "모든 사용자"인지, 주소가 /exec 로 끝나는지 확인하세요.'); }
+    }, function () { throw new Error('서버에 연결하지 못했습니다. 인터넷 연결과 웹앱 주소를 확인하세요.'); });
+  }
+
+  function doLoad() { // 직전 가격 불러오기 실행
+    var st = els['load-status'];
+    if (!els.pw.value) { st.textContent = '비밀번호를 입력하세요.'; return; }
+    st.textContent = '불러오는 중...'; els['btn-load'].disabled = true;
+    call({ action: 'latest', password: els.pw.value }).then(function (r) {
+      if (!r.ok) { st.textContent = r.error || '불러오지 못했습니다.'; return; }
+      LAST = r.last || {}; showLast();
+      var n = Object.keys(LAST).length;
+      st.textContent = '직전 가격 ' + n + '개를 불러왔습니다.';
+      store('session', 'chem_pw', els.pw.value);
+    }).catch(function (e) { st.textContent = e.message; }).then(function () { els['btn-load'].disabled = false; });
+  }
+
+  function collect() { // 입력칸에서 {코드: 숫자} 모으기. 오류 목록도 함께 반환
+    var values = {}, errs = [];
+    ITEMS.forEach(function (it) {
+      var v = num(document.getElementById('in-' + it.code).value);
+      if (v === null) return;
+      if (isNaN(v)) { errs.push(it.label + ': 숫자로 읽을 수 없습니다.'); return; }
+      values[it.code] = v;
+    });
+    return { values: values, errs: errs };
+  }
+
+  function save(confirm) { // 저장 실행
+    els.result.hidden = true;
+    if (!els.pw.value) { box(els.result, 'err', '비밀번호를 입력하세요.'); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(els.date.value)) { box(els.result, 'err', '날짜를 선택하세요.'); return; }
+    var c = collect();
+    if (c.errs.length) { box(els.result, 'err', '입력을 확인하세요.', c.errs); return; }
+    if (!Object.keys(c.values).length) { box(els.result, 'err', '입력된 가격이 없습니다.'); return; }
+    els['btn-save'].disabled = true; els['btn-confirm'].disabled = true;
+    call({ action: 'save', password: els.pw.value, date: els.date.value, values: c.values, confirm: !!confirm }).then(function (r) {
+      if (r.needConfirm) { box(els.warnbox, 'warn', '저장 전에 확인하세요.', r.warnings); els['btn-confirm'].hidden = false; return; }
+      els.warnbox.hidden = true; els['btn-confirm'].hidden = true;
+      if (!r.ok) { box(els.result, 'err', r.error || '저장하지 못했습니다.'); return; }
+      var lines = [];
+      (r.added || []).forEach(function (a) { lines.push('추가 ' + labelOf(a.code) + ' = ' + fmt(a.price)); });
+      (r.updated || []).forEach(function (u) { lines.push('수정 ' + labelOf(u.code) + ': ' + fmt(u.old) + ' → ' + fmt(u.price)); });
+      var rb = r.rebuild === 'started' ? '대시보드 다시 만들기를 시작했습니다. 1~2분 뒤 반영됩니다.' : (r.rebuild === 'skipped' ? '대시보드는 다음 자동 빌드(평일 아침)에 반영됩니다.' : '대시보드 다시 만들기 요청이 실패했습니다. GitHub에서 직접 실행하세요. (' + r.rebuild + ')');
+      lines.push(rb);
+      box(els.result, 'ok', r.date + ' 저장 완료 (추가 ' + (r.added || []).length + ', 수정 ' + (r.updated || []).length + ')', lines);
+      store('session', 'chem_pw', els.pw.value);
+      doLoadQuiet();
+    }).catch(function (e) { box(els.result, 'err', e.message); }).then(function () { els['btn-save'].disabled = false; els['btn-confirm'].disabled = false; });
+  }
+  function labelOf(code) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].code === code) return ITEMS[i].label; return code; }
+  function doLoadQuiet() { // 저장 뒤 직전 가격을 조용히 갱신
+    call({ action: 'latest', password: els.pw.value }).then(function (r) { if (r.ok) { LAST = r.last || {}; showLast(); } }).catch(function () {});
+  }
+
+  function clearInputs() { // 입력칸 비우기
+    ITEMS.forEach(function (it) { document.getElementById('in-' + it.code).value = ''; showChange(it.code); });
+    els.warnbox.hidden = true; els['btn-confirm'].hidden = true; els.result.hidden = true;
+  }
+
+  // 시작
+  buildItems();
+  els.date.value = kstToday(); showDow();
+  els.gasurl.value = GAS_URL || store('local', 'chem_gas_url');
+  if (GAS_URL) { els.urlbox.hidden = true; } else if (!els.gasurl.value) { els.urlbox.open = true; }
+  els.pw.value = store('session', 'chem_pw');
+  els.gasurl.addEventListener('change', function () { store('local', 'chem_gas_url', els.gasurl.value.trim()); });
+  els.date.addEventListener('input', showDow);
+  els['btn-load'].addEventListener('click', doLoad);
+  els['btn-save'].addEventListener('click', function () { save(false); });
+  els['btn-confirm'].addEventListener('click', function () { save(true); });
+  els['btn-clear'].addEventListener('click', clearInputs);
+  els.pw.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLoad(); });
+  window.__ADMIN__ = { collect: collect, num: num, fmt: fmt, items: ITEMS };
+})();
+</script>
+</body>
+</html>

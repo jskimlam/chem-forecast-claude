@@ -1,0 +1,1623 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>원료 가격 기술적 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* 레이아웃: 품목 탭 → 경고 배너 → 한 줄 결론 → 요약 수치 → 종가 차트 → 확률 예측 → 해설 → 갈림길.
+   색은 한국 관행(상승 빨강, 하락 파랑). 밴드와 예측 범위는 잉크 투명도로 구분한다. */
+:root {
+  --bg: #eceff0;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink2: #52514e;
+  --muted: #6c6b66;
+  --line: #d9dad6;
+  --grid: #e8e9e5;
+  --up: #e34948;
+  --down: #2a78d6;
+  --ma1: #4a3aa7;
+  --ma2: #1baf7a;
+  --ma3: #eda100;
+  --ma4: #b5379a;
+  --warn-bg: #fff4d6;
+  --warn-ink: #5a4300;
+  --warn-line: #e5c56a;
+  --sans: "IBM Plex Sans KR", system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f;
+    --line: #34332f; --grid: #262624; --up: #e66767; --down: #3987e5;
+    --ma1: #9085e9; --ma2: #199e70; --ma3: #c98500; --ma4: #d56fc0;
+    --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101212; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #9a998f;
+  --line: #34332f; --grid: #262624; --up: #e66767; --down: #3987e5;
+  --ma1: #9085e9; --ma2: #199e70; --ma3: #c98500; --ma4: #d56fc0;
+  --warn-bg: #3a2f10; --warn-ink: #f0dca0; --warn-line: #7a6320; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.6; padding-block: 28px 56px; padding-inline: 16px; }
+.page { max-width: 1040px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2, h3, p { margin: 0; }
+.eyebrow { font: 500 12px/1.4 var(--mono); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; overflow-wrap: anywhere; }
+h1 { font-size: clamp(24px, 4.2vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -.01em; text-wrap: balance; margin-top: 6px; }
+.verdict { margin-top: 10px; max-width: 62ch; color: var(--ink2); font-size: 15px; }
+header { display: block; }
+
+.banner { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); border-radius: 6px; padding: 10px 14px; font-size: 13px; }
+.banner ul { margin: 6px 0 0; padding-left: 18px; }
+.banner b { font-weight: 600; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.stat { background: var(--surface); padding: 12px 14px; min-width: 0; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.stat .v { font: 500 20px/1.3 var(--mono); font-variant-numeric: tabular-nums; margin-top: 2px; overflow-wrap: anywhere; }
+.stat .s { font: 400 12px/1.4 var(--mono); color: var(--ink2); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.glyph.up { color: var(--up); }
+.glyph.dn { color: var(--down); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 14px 10px; min-width: 0; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: center; }
+.toggles, .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: 500 13px/1 var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; cursor: pointer; min-height: 34px; }
+button:hover { border-color: var(--ink2); }
+button:focus-visible, .chartwrap:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+button[aria-pressed="true"].tg { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.acts button { border-color: var(--ink2); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; font-size: 12px; color: var(--ink2); }
+.lg { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.lg b { font-family: var(--mono); font-weight: 500; color: var(--ink); }
+.cn { display: inline-block; width: 8px; height: 12px; border-radius: 2px; }
+.cn.up { background: var(--up); }
+.cn.dn { background: var(--down); }
+.sw { display: inline-block; width: 20px; height: 0; border-top: 2px solid; }
+.sw.s1 { border-color: var(--ma1); }
+.sw.s2 { border-color: var(--ma2); border-top-style: dashed; }
+.sw.s3 { border-color: var(--ma3); }
+.sw.s4 { border-color: var(--ma4); border-top-width: 3px; }
+.bx { display: inline-block; width: 16px; height: 10px; border-radius: 2px; background: var(--ink); }
+.bx.b1 { opacity: .18; }
+.bx.b2 { opacity: .08; }
+.bx.bb { opacity: .12; box-shadow: inset 0 0 0 1px var(--ink2); }
+
+.chartwrap { position: relative; margin-top: 8px; touch-action: pan-y; min-width: 0; }
+.chartwrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+.grid { stroke: var(--grid); stroke-width: 1; }
+.axis { font: 11px var(--mono); fill: var(--muted); font-variant-numeric: tabular-nums; }
+.axis.fcd { fill: var(--ink2); font-weight: 500; }
+.lbl { font: 11px var(--sans); fill: var(--ink2); font-variant-numeric: tabular-nums; }
+.lbl.strong { fill: var(--ink); font-weight: 600; }
+.lvl { stroke: var(--ink2); stroke-width: 1; opacity: .7; }
+.lvl.R { stroke-dasharray: 6 4; }
+.lvl.S { stroke-dasharray: 2 4; }
+.tick { stroke: var(--ink2); stroke-width: 1; opacity: .6; }
+.band { fill: var(--ink); opacity: .1; }
+.hl { fill: none; stroke: var(--ink2); stroke-width: 1.5; stroke-dasharray: 2 3; }
+.ma { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ma1 { stroke: var(--ma1); }
+.ma2 { stroke: var(--ma2); stroke-dasharray: 7 4; }
+.ma3 { stroke: var(--ma3); }
+.ma4 { stroke: var(--ma4); stroke-width: 2.5; }
+.rsiob { fill: var(--up); opacity: .10; }
+.rsios { fill: var(--down); opacity: .10; }
+.rsil { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
+.subg { stroke: var(--ink2); stroke-width: 1; stroke-dasharray: 3 3; opacity: .6; }
+.subz { stroke: var(--ink2); stroke-width: 1; opacity: .8; }
+.mcl { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
+.msl { fill: none; stroke: var(--ink2); stroke-width: 1.6; stroke-dasharray: 5 3; stroke-linejoin: round; }
+.hup { fill: var(--up); opacity: .55; }
+.hdn { fill: var(--down); opacity: .55; }
+.bbf { fill: var(--ink); opacity: .08; }
+.bbl { fill: none; stroke: var(--ink2); stroke-width: 1.5; opacity: .85; }
+.bbm { fill: none; stroke: var(--ink2); stroke-width: 1; stroke-dasharray: 4 3; opacity: .7; }
+.fz { fill: var(--ink); opacity: .035; }
+.fsep { stroke: var(--ink2); stroke-width: 1; stroke-dasharray: 2 3; opacity: .7; }
+.fan2 { fill: var(--ink); opacity: .08; }
+.fan1 { fill: var(--ink); opacity: .14; }
+.fcl { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 5 3; }
+.rollmk { fill: var(--ink2); }
+.up .wick { stroke: var(--up); }
+.up .body, .up .vol { fill: var(--up); }
+.dn .wick { stroke: var(--down); }
+.dn .body, .dn .vol { fill: var(--down); }
+.wick { stroke-width: 1.5; }
+.vol { opacity: .5; }
+.cross { stroke: var(--ink2); stroke-width: 1; stroke-dasharray: 3 3; }
+.cdl, .layer { transition: opacity .4s ease; }
+.pre .cdl, .pre .layer { opacity: 0; transition: none; }
+.off-ma .g-ma, .off-lv .g-lv, .off-pt .g-pt, .off-bb .g-bb, .off-fc .g-fc { display: none; }
+
+.tt { position: absolute; z-index: 2; background: var(--surface); border: 1px solid var(--ink2); border-radius: 4px; padding: 8px 10px; font-size: 12px; line-height: 1.5; pointer-events: none; min-width: 176px; max-width: 232px; }
+.tt .d { font-weight: 600; margin-bottom: 2px; }
+.tt .row { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+.tt .row span:last-child { font-family: var(--mono); }
+.tt .sep { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; }
+
+.tablewrap { margin-top: 10px; overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 4px; }
+.twrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font: 13px var(--mono); font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+th { position: sticky; top: 0; background: var(--surface); font: 500 12px var(--sans); color: var(--muted); border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+td.neg { color: var(--down); }
+td.pos { color: var(--up); }
+td.txt, th.txt { text-align: left; white-space: normal; min-width: 120px; font-family: var(--sans); }
+td a { color: var(--ink); }
+.hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+h2 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+h3 { font-size: 14px; font-weight: 600; }
+
+.fc { display: flex; flex-direction: column; gap: 12px; }
+.sum { max-width: 70ch; color: var(--ink2); font-size: 15px; }
+.fcard { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.ctrls { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 24px; align-items: start; }
+.ctrl { min-width: 0; }
+.ctrl .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 500; }
+.ctrl output { font: 500 13px var(--mono); font-variant-numeric: tabular-nums; }
+.ctrl input[type="range"] { width: 100%; margin: 6px 0 0; accent-color: var(--ink); }
+.ctrl .h { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.reset { align-self: flex-start; }
+.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.ro { background: var(--surface); padding: 8px 10px; min-width: 0; }
+.ro .k { font-size: 11.5px; color: var(--muted); }
+.ro .v { font: 500 15px/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+.pbh { display: grid; grid-template-columns: 78px 1fr 118px; gap: 10px; font-size: 12px; color: var(--muted); }
+.pbh .mid { display: flex; justify-content: space-between; }
+.pb { display: grid; grid-template-columns: 78px 1fr 118px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--grid); }
+.pb .dt { font-weight: 500; }
+.pb .num { font: 500 12.5px var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; text-align: right; }
+.pbar { position: relative; display: flex; gap: 2px; height: 22px; }
+.pbar span { height: 100%; }
+.pbar .dn { background: var(--down); border-radius: 3px 0 0 3px; }
+.pbar .up { background: var(--up); border-radius: 0 3px 3px 0; }
+.pbar::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; border-left: 1px dashed var(--ink); }
+.how { font-size: 13px; color: var(--ink2); }
+.how summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.how ol { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; max-width: 78ch; }
+.how .lim { margin-top: 8px; max-width: 78ch; }
+
+.reading { display: flex; flex-direction: column; gap: 12px; }
+.finds { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px 28px; }
+.find { min-width: 0; border-top: 2px solid var(--ink); padding-top: 10px; }
+.find h3 { margin: 0 0 4px; }
+.find p { color: var(--ink2); }
+
+.fork { display: flex; flex-direction: column; gap: 12px; }
+.ladders { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.ladder { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; }
+.ladder .cond { font-size: 13px; color: var(--ink2); margin-top: 2px; }
+.ladder ol { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; }
+.ladder li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--grid); min-width: 0; }
+.ladder li .p { font: 500 14px/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+.ladder li .b { font-size: 12.5px; color: var(--ink2); min-width: 0; }
+.target { font-size: 13px; color: var(--ink2); margin-top: 10px; }
+
+.sect { display: flex; flex-direction: column; gap: 12px; }
+.sect .sub { color: var(--ink2); max-width: 70ch; font-size: 13px; }
+
+.dirsec { display: flex; flex-direction: column; gap: 12px; }
+.dirhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
+.dirgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.dircard { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.dircard .when { font-weight: 600; font-size: 15px; }
+.dircard .when span { font: 400 12px var(--mono); color: var(--muted); margin-left: 8px; }
+.dbar { display: flex; gap: 2px; height: 30px; }
+.dbar span { height: 100%; min-width: 2px; }
+.dbar .dn { background: var(--down); border-radius: 4px 0 0 4px; }
+.dbar .fl { background: var(--muted); }
+.dbar .up { background: var(--up); border-radius: 0 4px 4px 0; }
+.dleg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; }
+.dleg .c { text-align: center; }
+.dleg .r { text-align: right; }
+.dedge { font-weight: 600; font-size: 13.5px; }
+.dnote { font-size: 12px; color: var(--ink2); }
+.lvsec { display: flex; flex-direction: column; gap: 12px; }
+.lvlist { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.lvrow { display: grid; grid-template-columns: 76px minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, 1.4fr); gap: 6px 16px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--grid); }
+.lvrow:first-child { border-top: 0; }
+.lvrow.lvhd { padding-block: 8px; font-size: 12px; color: var(--muted); background: var(--bg); }
+.lvp { font: 600 15px var(--mono); font-variant-numeric: tabular-nums; }
+.lvn { font-size: 13px; min-width: 0; }
+.lvn small { display: block; font-size: 11.5px; color: var(--muted); }
+.lvh { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.lvbar { height: 10px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.lvbar span { display: block; height: 100%; min-width: 2px; }
+.lvrow.up .lvbar span { background: var(--up); }
+.lvrow.dn .lvbar span { background: var(--down); }
+.lvnum { font: 600 15px var(--mono); font-variant-numeric: tabular-nums; }
+.lvnum small { display: inline-block; white-space: nowrap; font: 400 12px var(--sans); color: var(--ink2); margin-left: 6px; }
+.lvnow { padding: 8px 14px; font: 600 13px var(--mono); background: var(--bg); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); font-variant-numeric: tabular-nums; }
+.capov { position: fixed; inset: 0; background: rgba(0, 0, 0, .72); display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 16px; z-index: 50; }
+.capov[hidden] { display: none; }
+.capbox { background: var(--surface); border-radius: 8px; padding: 12px; width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: 10px; }
+.capbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.capcard svg { width: 100%; height: auto; display: block; border: 1px solid var(--line); }
+.caphint { font-size: 12px; color: var(--muted); }
+
+.sigsec[hidden] { display: none; }
+.sigsec { display: flex; flex-direction: column; gap: 12px; }
+.sigs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.sig { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.sig .nm { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 600; font-size: 14px; }
+.sig .tone { font: 500 12px var(--sans); color: var(--ink2); white-space: nowrap; }
+.sig .val { font: 500 14px/1.45 var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.sig .rd { font-size: 13px; color: var(--ink2); }
+.notes { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; max-width: 78ch; }
+@media (max-width: 640px) {
+  .lvrow { grid-template-columns: 1fr 1fr; }
+  .lvrow .lvn { text-align: right; }
+  .lvrow.lvhd { display: none; }
+}
+@media (max-width: 520px) {
+  .ladder li { grid-template-columns: 78px 1fr; }
+  .tt { min-width: 160px; }
+  .pbh, .pb { grid-template-columns: 62px 1fr 108px; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cdl, .layer { transition: none; }
+  #btn-replay { display: none; }
+}
+
+/* ── 탭(그룹 줄 + 품목 줄): 화면 위에 붙어 다닌다 ── */
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; flex-direction: column; gap: 8px; margin-inline: -16px; padding: 10px 16px 10px; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabrow { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabrow:empty { display: none; }
+.tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; min-height: 34px; font: 500 13px/1.2 var(--sans); background: var(--surface); }
+.tab .cnt { font: 400 11px var(--mono); color: var(--muted); }
+.tab .tchg { font: 500 11.5px var(--mono); font-variant-numeric: tabular-nums; }
+.tab .tchg.up { color: var(--up); }
+.tab .tchg.dn { color: var(--down); }
+.tab .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ma3); display: inline-block; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.tab[aria-selected="true"] .cnt { color: var(--surface); opacity: .75; }
+.tab[aria-selected="true"] .tchg.up, .tab[aria-selected="true"] .tchg.dn { color: var(--surface); }
+.tabrow.items .tab { font-weight: 400; }
+.tabrow.items .tab[aria-selected="true"] { font-weight: 600; }
+
+/* ── 전체 요약 탭 ── */
+#itemcontent { display: flex; flex-direction: column; gap: 28px; }
+#overview { display: flex; flex-direction: column; gap: 22px; }
+#overview[hidden], #itemview[hidden] { display: none; }
+.ovg { display: flex; flex-direction: column; gap: 8px; }
+.ovt th, .ovt td { padding: 8px 10px; }
+.ovt tbody tr { cursor: pointer; }
+.ovt tbody tr:hover td { background: var(--bg); }
+.ovt tbody tr:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.ovt td.lbl1 { font-family: var(--sans); font-weight: 500; white-space: nowrap; }
+.ovt td.lbl1 small { display: block; font: 400 11px var(--mono); color: var(--muted); }
+.ovt td.ctr, .ovt th.ctr { text-align: center; }
+.ovt td.txt2 { font-family: var(--sans); font-size: 12.5px; white-space: nowrap; }
+.pos { color: var(--up); }
+.neg { color: var(--down); }
+.hot { color: var(--up); font-weight: 600; }
+.cold { color: var(--down); font-weight: 600; }
+.pill { display: inline-block; font: 500 11px/1.4 var(--sans); padding: 1px 6px; border-radius: 3px; background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); margin-left: 6px; white-space: nowrap; }
+.mini { display: inline-block; width: 44px; height: 6px; background: var(--grid); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-left: 6px; }
+.mini i { display: block; height: 100%; background: var(--ink2); }
+.banner.err { background: #fde8e8; color: #6b1414; border-color: #e5a0a0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .banner.err { background: #3a1616; color: #f3c4c4; border-color: #7a2a2a; } }
+:root[data-theme="dark"] .banner.err { background: #3a1616; color: #f3c4c4; border-color: #7a2a2a; }
+.line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.dotp { fill: var(--ink); }
+.off-ma .g-ma, .off-lv .g-lv, .off-pt .g-pt, .off-bb .g-bb, .off-fc .g-fc { display: none; }
+@media (max-width: 640px) {
+  .tabs { padding-inline: 12px; margin-inline: -16px; }
+  .tab { padding: 6px 9px; font-size: 12.5px; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <nav class="tabs" aria-label="품목 선택">
+    <div class="tabrow" id="grp-row" role="tablist" aria-label="품목 그룹"></div>
+    <div class="tabrow items" id="itm-row" role="tablist" aria-label="품목"></div>
+  </nav>
+
+  <!-- 전체 요약: 표시 품목을 한 표로 비교. 행을 누르면 해당 품목 탭으로 이동 -->
+  <section id="overview" aria-label="전체 요약" hidden>
+    <header>
+      <p class="eyebrow" id="ov-eyebrow"></p>
+      <h1>원료 가격 기술적 분석</h1>
+      <p class="verdict" id="ov-verdict"></p>
+    </header>
+    <div class="banner" id="ov-banner" role="status" hidden></div>
+    <div id="ov-body"></div>
+    <details class="how">
+      <summary>표 읽는 법과 한계</summary>
+      <ol id="ov-how"></ol>
+    </details>
+  </section>
+
+  <!-- 품목 탭 -->
+  <div id="itemview" hidden>
+    <div class="banner err" id="item-error" role="alert" hidden></div>
+    <div id="itemcontent">
+      <header>
+        <p class="eyebrow" id="eyebrow"></p>
+        <h1 id="title">기술적 분석</h1>
+        <p class="verdict" id="verdict"></p>
+      </header>
+
+      <div class="banner" id="banner" role="status" hidden></div>
+
+      <section class="stats" id="stats" aria-label="요약 수치"></section>
+
+      <section class="dirsec" id="dir" aria-label="방향 확률">
+        <div class="dirhead">
+          <h2>방향 확률 · 상승 / 보합 / 하락</h2>
+          <div class="acts"><button id="btn-cap">캡처 모드</button></div>
+        </div>
+        <div class="dirgrid" id="dir-grid"></div>
+        <p class="dnote" id="dir-note"></p>
+      </section>
+
+      <section class="lvsec" id="lvsec" aria-label="가격대별 확률">
+        <div class="dirhead">
+          <h2>가격대별 확률 · 주요 가격을 넘을까, 깰까</h2>
+        </div>
+        <div class="lvlist" id="lvlist"></div>
+        <p class="dnote" id="lv-note"></p>
+      </section>
+
+      <section class="panel" aria-label="종가 차트">
+        <div class="toolbar">
+          <div class="toggles" role="group" aria-label="차트 레이어">
+            <button class="tg" id="tg-bb" aria-pressed="true">볼린저밴드</button>
+            <button class="tg" id="tg-fc" aria-pressed="true">예측 밴드</button>
+            <button class="tg" id="tg-lv" aria-pressed="true">지지·저항</button>
+            <button class="tg" id="tg-ma" aria-pressed="false">이동평균</button>
+            <button class="tg" id="tg-sub" aria-pressed="true">RSI·MACD</button>
+            <button class="tg" id="tg-pt" aria-pressed="false">고점 추세선·바닥 밴드</button>
+          </div>
+          <div class="acts">
+            <button id="btn-table" aria-pressed="false">표로 보기</button>
+          </div>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="chartwrap off-ma off-pt" id="wrap" tabindex="0" aria-label="종가 차트와 예측 밴드. 좌우 방향키로 날짜를 이동하면 값이 보입니다.">
+          <div id="svgHost"></div>
+          <div class="tt" id="tt" hidden></div>
+        </div>
+        <div class="tablewrap" id="tablewrap" hidden>
+          <table id="tbl"></table>
+        </div>
+        <p class="hint" id="chart-hint"></p>
+      </section>
+
+      <section class="sigsec" id="sigsec" aria-label="보조지표 현황">
+        <h2 id="sig-title">보조지표 현황</h2>
+        <div class="sigs" id="sigs"></div>
+        <p class="dnote" id="sig-note"></p>
+      </section>
+
+      <section class="fc" id="forecast">
+        <h2 id="fc-title">확률 예측</h2>
+        <p class="sum" id="fc-sum"></p>
+
+        <div class="fcard">
+          <div class="ctrls">
+            <div class="ctrl">
+              <div class="top"><label for="sl-t">추세 반영도</label><output id="o-t">0.50</output></div>
+              <input type="range" id="sl-t" min="0" max="1" step="0.05" value="0.5">
+              <p class="h" id="h-t"></p>
+            </div>
+            <div class="ctrl">
+              <div class="top"><label for="sl-m">볼린저 평균회귀 반영도</label><output id="o-m">0.50</output></div>
+              <input type="range" id="sl-m" min="0" max="1" step="0.05" value="0.5">
+              <p class="h" id="h-m"></p>
+            </div>
+          </div>
+          <button class="reset" id="btn-reset">서버 기본값으로</button>
+          <div class="readout" id="readout" aria-label="모델 입력값"></div>
+        </div>
+
+        <div class="fcard">
+          <h3>예측일별 상승·하락 확률</h3>
+          <div>
+            <div class="pbh"><span>날짜</span><span class="mid"><span>◀ 하락</span><span>상승 ▶</span></span><span style="text-align:right" id="pbh-r">하루 방향</span></div>
+            <div id="pbars"></div>
+          </div>
+          <h3>예측일별 예측 범위와 레벨 확률</h3>
+          <div class="twrap"><table id="ftbl"></table></div>
+        </div>
+
+        <details class="how">
+          <summary>계산 방법과 한계</summary>
+          <ol id="how-list"></ol>
+          <p class="lim" id="lim"></p>
+        </details>
+      </section>
+
+      <section class="reading">
+        <h2>차트가 보여주는 것</h2>
+        <div class="finds" id="finds"></div>
+      </section>
+
+      <section class="fork">
+        <h2>하락과 상승의 갈림길</h2>
+        <div class="ladders">
+          <div class="ladder">
+            <h3>하락 쪽</h3>
+            <p class="cond" id="cond-dn"></p>
+            <ol id="ld-dn"></ol>
+            <p class="target" id="target"></p>
+          </div>
+          <div class="ladder">
+            <h3>상승 쪽</h3>
+            <p class="cond" id="cond-up"></p>
+            <ol id="ld-up"></ol>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="notes" id="notes"></footer>
+</main>
+
+<div class="capov" id="capov" hidden role="dialog" aria-modal="true" aria-label="공유용 캡처 카드">
+  <div class="capbox">
+    <div class="capbar">
+      <button id="cap-save">PNG로 저장</button>
+      <button id="cap-share" hidden>공유</button>
+      <button id="cap-close">닫기</button>
+    </div>
+    <div class="capcard" id="cap-card"></div>
+    <p class="caphint" id="cap-hint"></p>
+  </div>
+</div>
+
+<script>
+var CHEMDATA = __CHEM_DATA__;
+</script>
+<script>
+(function () {
+  'use strict';
+  var ROOT = CHEMDATA; // 서버가 심어 준 전체 데이터(그룹·요약·품목별 데이터)
+
+  // ── 모델 (순수 함수, 파이썬 src/forecast.py 와 같은 공식) ─────────
+  // MODEL-START
+  function erf(x) {
+    var s = x < 0 ? -1 : 1;
+    x = Math.abs(x);
+    var t = 1 / (1 + 0.3275911 * x);
+    var y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+    return s * y;
+  }
+  function Phi(x) { return 0.5 * (1 + erf(x / Math.SQRT2)); }
+  function bollinger(closes, i, n, k) {
+    var w = closes.slice(i - n + 1, i + 1), s = 0, q = 0;
+    w.forEach(function (v) { s += v; });
+    var m = s / n;
+    w.forEach(function (v) { q += (v - m) * (v - m); });
+    var sd = Math.sqrt(q / n); // 볼린저 표준편차는 모표준편차
+    return { mid: m, up: m + k * sd, lo: m - k * sd, sd: sd };
+  }
+  // pr: 서버가 준 모델 설정(sd 봉당 변동성, trend_decay, kappa_scale, flat_band_first/last), win: 주기별 프리셋(bb, trend)
+  function computeModel(closes, wT, wM, days, lvLo, lvHi, pr, win) {
+    var n = closes.length, P0 = closes[n - 1];
+    var bb = bollinger(closes, n - 1, win.bb, 2);
+    var width = bb.up - bb.lo;
+    var pb = width > 0 ? (P0 - bb.lo) / width : 0.5; // 밴드 폭이 0이면 %b는 0.5
+    var bw = bb.mid !== 0 ? width / bb.mid : 0;
+    var sd = pr.sd; // 변동성은 서버에서 방어 로직(0 방지)을 거쳐 계산한 값을 그대로 사용
+    var tn = win.trend, y = closes.slice(n - tn), ym = 0, j;
+    y.forEach(function (c) { ym += c; }); ym /= tn;
+    var xm = (tn - 1) / 2, num = 0, den = 0;
+    for (j = 0; j < tn; j++) { num += (j - xm) * (y[j] - ym); den += (j - xm) * (j - xm); }
+    var slope = num / den, g = slope / P0;
+    var kappa = pr.kappa_scale * wM, gap = Math.log(bb.mid / P0), phi = pr.trend_decay;
+    var bandFirst = pr.flat_band_first, bandLast = pr.flat_band_last;
+    var rows = [], M = 0, t;
+    for (t = 1; t <= days; t++) {
+      var mT = wT * g * Math.pow(phi, t - 1);
+      var mM = gap * (Math.exp(-kappa * (t - 1)) - Math.exp(-kappa * t));
+      var m = mT + mM; M += m;
+      var SD = sd * Math.sqrt(t);
+      var band = days <= 1 ? bandFirst : bandFirst + (bandLast - bandFirst) * (t - 1) / (days - 1);
+      var p3Up = 1 - Phi((Math.log(1 + band) - M) / SD);
+      var p3Dn = Phi((Math.log(1 - band) - M) / SD);
+      rows.push({
+        t: t, m: m, pUp: Phi(m / sd), cum: Phi(M / SD),
+        band: band, p3Up: p3Up, p3Flat: 1 - p3Up - p3Dn, p3Dn: p3Dn,
+        center: P0 * Math.exp(M),
+        lo1: P0 * Math.exp(M - SD), hi1: P0 * Math.exp(M + SD),
+        lo2: P0 * Math.exp(M - 2 * SD), hi2: P0 * Math.exp(M + 2 * SD),
+        pBelow: Phi((Math.log(lvLo / P0) - M) / SD),
+        pAbove: 1 - Phi((Math.log(lvHi / P0) - M) / SD)
+      });
+    }
+    return { P0: P0, bb: bb, pb: pb, bw: bw, sd: sd, slope: slope, g: g, rows: rows };
+  }
+  // MODEL-END
+
+  // ── 상태: 현재 선택한 품목의 데이터(탭을 바꿀 때마다 load()가 다시 채움) ──
+  var WD = ['일', '월', '화', '수', '목', '금', '토'];
+  var MINUS = '−';
+  var CUR = null; // 현재 품목 코드(null이면 전체 요약)
+  var DATA = null, ALL = [], NA = 0, V = 0, OFF = 0, D = [], N = 0, FC0 = null, FD = [], NF = 0, NS = 0;
+  var LVLO = 0, LVHI = 0, DEF = { wT: 0.5, wM: 0.5 }, S = { wT: 0.5, wM: 0.5 };
+  var LV = [], PAT = null, CLOSES = [], MAS = [], BBS = [], MODEL = null;
+  var WIN = null, U = '일', DIG = 2, LAB = null;
+  var SUB = true; // RSI·MACD 보조 패널 표시 여부
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function mkDay(ds) {
+    var p = ds.split('-').map(Number);
+    var dt = new Date(p[0], p[1] - 1, p[2]);
+    return { date: ds, m: p[1], d: p[2], wd: WD[dt.getDay()] };
+  }
+  // 숫자 서식: 천 단위 쉼표 + 품목별 소수 자릿수
+  function num(v, d) { return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function fx(v) { return num(v, DIG); } // 가격(전체 자릿수)
+  function fl(v) { return num(v, Math.max(0, DIG - 1)); } // 레벨 가격(한 자리 적게)
+  function mdg() { return Math.max(1, DIG); } // MACD 값 자릿수
+  function sm(v) { return (v < 0 ? MINUS : '+') + num(Math.abs(v), mdg()); } // 부호 있는 MACD 값
+  function pct(p) { return (p * 100).toFixed(1) + '%'; }
+  function fd(d) { return d.m + '/' + d.d; }
+  function sgn(v) { return (v < 0 ? MINUS : '+') + Math.abs(v).toFixed(2) + '%'; }
+  function cls(v) { return v == null ? '' : (v < 0 ? 'neg' : 'pos'); }
+
+  function smaAll(p) { // p봉 단순이동평균(표시 구간만 잘라서 반환)
+    return ALL.map(function (_, i) {
+      if (i < p - 1) return null;
+      var s = 0;
+      for (var k = i - p + 1; k <= i; k++) s += ALL[k].c;
+      return s / p;
+    }).slice(OFF);
+  }
+
+  // 품목 데이터를 읽어 상태를 채운다. 데이터가 부족한 품목이면 false.
+  function load(code) {
+    DATA = ROOT.items[code];
+    CUR = code;
+    WIN = DATA.win; U = WIN.unit; DIG = DATA.meta.digits || 2; LAB = DATA.labels || null;
+    if (DATA.error) return false;
+    ALL = DATA.bars.map(function (b) {
+      var o = mkDay(b.date);
+      o.c = b.c;
+      o.chg = b.chg == null ? null : b.chg * 100;
+      o.rsi = b.rsi == null ? null : b.rsi;
+      o.macd = b.macd == null ? null : b.macd;
+      o.sig = b.sig == null ? null : b.sig;
+      o.hist = b.hist == null ? null : b.hist;
+      return o;
+    });
+    NA = ALL.length;
+    V = Math.min(DATA.view_bars || 60, NA);
+    OFF = NA - V;
+    D = ALL.slice(OFF);
+    N = D.length;
+    FC0 = DATA.forecast;
+    FD = FC0.dates.map(mkDay);
+    NF = FD.length;
+    NS = N + NF;
+    LVLO = FC0.thresholds.below; LVHI = FC0.thresholds.above;
+    DEF = { wT: FC0.params.wt, wM: FC0.params.wm };
+    S = { wT: DEF.wT, wM: DEF.wM };
+    LV = DATA.levels || [];
+    PAT = DATA.patterns;
+    CLOSES = ALL.map(function (d) { return d.c; });
+    MAS = WIN.ma.map(function (p) { return smaAll(p); });
+    BBS = CLOSES.map(function (_, i) { return i >= WIN.bb - 1 ? bollinger(CLOSES, i, WIN.bb, 2) : null; }).slice(OFF);
+    return true;
+  }
+  function recompute() {
+    MODEL = computeModel(CLOSES, S.wT, S.wM, NF, LVLO, LVHI, FC0.params, WIN);
+  }
+
+  // ── 정적 영역 ───────────────────────────────────────────────
+  function updateHead() {
+    var m = DATA.meta, a = D[0], z = D[N - 1];
+    document.getElementById('title').textContent = m.label + ' 기술적 분석';
+    document.title = m.label + ' · 원료 가격 기술적 분석';
+    document.getElementById('eyebrow').textContent = m.code + ' · ' + m.name + ' · ' + m.unit_label + ' · ' + (m.freq === 'W' ? '주간' : '일간') + ' · ' + a.date + ' – ' + z.date + ' · 생성 ' + m.generated_at;
+    document.getElementById('verdict').textContent = DATA.verdict;
+    document.getElementById('fc-title').textContent = fd(FD[0]) + '–' + fd(FD[NF - 1]) + ' 확률 예측';
+    document.getElementById('chart-hint').textContent = '오른쪽 음영은 ' + fd(FD[0]) + '~' + fd(FD[NF - 1]) + ' 예측 범위(진한 쪽 1σ, 옅은 쪽 2σ)입니다. 선은 평가가격(종가)입니다. 차트 위에 마우스를 올리거나 터치하면 날짜별 값이 보입니다.';
+    var warns = m.warnings || [];
+    var box = document.getElementById('banner');
+    if (warns.length) {
+      box.innerHTML = '<b>확인 필요</b><ul>' + warns.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>';
+    }
+    box.hidden = !warns.length;
+  }
+  function updateStats() {
+    var last = D[N - 1], n = LAB.n_chg, base = N > n ? D[N - 1 - n] : null, P = DATA.position;
+    var hiBar = D[0], loBar = D[0];
+    D.forEach(function (d) { if (d.c > hiBar.c) hiBar = d; if (d.c < loBar.c) loBar = d; });
+    var neg = last.chg != null && last.chg < 0;
+    var bchg = base && base.c > 0 ? (last.c / base.c - 1) * 100 : null;
+    var items = [
+      { k: fd(last) + ' 종가', v: fx(last.c), s: (last.chg == null ? '' : '<span class="glyph ' + (neg ? 'dn' : 'up') + '">' + (neg ? '▼' : '▲') + '</span> ' + sgn(last.chg) + ' · ') + esc(DATA.meta.unit_label) },
+      { k: n + U + ' 전 대비', v: bchg == null ? '–' : '<span class="' + cls(bchg) + '">' + sgn(bchg) + '</span>', s: base ? fd(base) + ' 종가 ' + fx(base.c) : '' },
+      { k: '최근 ' + N + '봉 종가 범위', v: fx(loBar.c) + ' – ' + fx(hiBar.c), s: '저점 ' + fd(loBar) + ' · 고점 ' + fd(hiBar) },
+      { k: '기간 고점 대비', v: hiBar.c > 0 ? MINUS + ((1 - last.c / hiBar.c) * 100).toFixed(1) + '%' : '–', s: '종가 고점 ' + fx(hiBar.c) + ' 기준' },
+      { k: '가격 위치 (최근 1년 백분위)', v: P.p1y.toFixed(0) + '%', s: 'Z ' + (P.z1y < 0 ? MINUS : '+') + Math.abs(P.z1y).toFixed(2) + ' · 전체 ' + P.nall + '봉 기준 ' + P.pall.toFixed(0) + '%' }
+    ];
+    document.getElementById('stats').innerHTML = items.map(function (it) {
+      return '<div class="stat"><div class="k">' + esc(it.k) + '</div><div class="v">' + it.v + '</div><div class="s">' + it.s + '</div></div>';
+    }).join('');
+  }
+  function updateLegend() {
+    var bbNote = NA >= WIN.bb ? '볼린저 ' + WIN.bb + U + '·2σ' : '볼린저 (봉 부족)';
+    var h = '<span class="lg"><i class="sw s4" style="border-color:var(--ink)"></i>평가가격(종가)</span>' +
+      '<span class="lg"><i class="bx bb"></i>' + bbNote + '</span>' +
+      '<span class="lg"><i class="bx b1"></i>예측 1σ</span>' +
+      '<span class="lg"><i class="bx b2"></i>예측 2σ</span>';
+    MAS.forEach(function (arr, i) {
+      var v = arr[N - 1];
+      h += '<span class="lg"><i class="sw s' + (i + 1) + '"></i>' + WIN.ma[i] + U + ' <b>' + (v == null ? '–' : fx(v)) + '</b></span>';
+    });
+    document.getElementById('legend').innerHTML = h;
+    document.getElementById('tg-ma').textContent = '이동평균 ' + WIN.ma.join('·');
+  }
+  function updateFinds() {
+    document.getElementById('finds').innerHTML = (DATA.findings || []).map(function (f) {
+      return '<div class="find"><h3>' + esc(f.title) + '</h3><p>' + esc(f.body) + '</p></div>';
+    }).join('');
+  }
+  function updateHistTable() {
+    var pl = WIN.ma[3];
+    var rows = D.slice().reverse().map(function (d, ri) {
+      var idx = N - 1 - ri, lv = MAS[3][idx];
+      return '<tr><td>' + d.m + '/' + d.d + ' (' + d.wd + ')</td><td>' + fx(d.c) + '</td><td class="' + cls(d.chg) + '">' + (d.chg == null ? '–' : sgn(d.chg)) + '</td><td>' + (lv == null ? '–' : fx(lv)) + '</td><td>' + (d.rsi == null ? '–' : d.rsi.toFixed(1)) + '</td><td>' + (d.hist == null ? '–' : sm(d.hist)) + '</td></tr>';
+    }).join('');
+    document.getElementById('tbl').innerHTML =
+      '<thead><tr><th>날짜</th><th>종가</th><th>등락</th><th>' + pl + U + '선</th><th>RSI</th><th>MACD 히스토</th></tr></thead><tbody>' + rows + '</tbody>';
+  }
+  function updateSignals() {
+    var sg = DATA.signals || [], box = document.getElementById('sigs');
+    var toneTxt = { up: '▲ 강세 쪽', dn: '▼ 약세 쪽', neutral: '– 중립·참고' };
+    box.innerHTML = sg.map(function (x) {
+      var tn = toneTxt[x.tone] ? x.tone : 'neutral';
+      return '<div class="sig"><div class="nm"><span>' + esc(x.name) + '</span><span class="tone"><span class="glyph ' + (tn === 'up' ? 'up' : tn === 'dn' ? 'dn' : '') + '">' + esc(toneTxt[tn].charAt(0)) + '</span>' + esc(toneTxt[tn].slice(1)) + '</span></div>' +
+        '<div class="val">' + esc(x.value) + '</div><div class="rd">' + esc(x.reading) + '</div></div>';
+    }).join('');
+    document.getElementById('sigsec').hidden = !sg.length;
+    document.getElementById('sig-title').textContent = '보조지표 현황 · ' + WIN.ma[3] + U + '선 · RSI · MACD';
+    document.getElementById('sig-note').textContent = '표시 전용입니다. 이 지표들은 위 확률 예측 계산에 들어가지 않고, 신호가 실제로 맞았는지는 아직 검증하지 않았습니다. 강세·약세 표시는 현재 상태를 말로 옮긴 것이며 매수·매도 신호가 아닙니다. RSI(' + WIN.rsi + ')는 와일더 방식, MACD(' + WIN.macd.join(',') + ')는 지수이동평균 기준이며 ' + (DATA.meta.freq === 'W' ? '주간 데이터에 맞춰 기간을 환산한 값입니다.' : '일간 표준 기간입니다.');
+  }
+  function updateHow() {
+    var pr = FC0.params, b1 = (pr.flat_band_first * 100).toFixed(1), b2 = (pr.flat_band_last * 100).toFixed(1);
+    var items = [
+      '출발점은 마지막으로 입력된 종가(평가가격)입니다.',
+      '폭은 최근 ' + WIN.vol + '개 로그수익률의 표준편차(' + U + ' 변동성 σ)로 잡고, t' + U + ' 뒤 폭은 σ√t입니다. 1σ는 약 68%, 2σ는 약 95% 범위이며 정규분포를 가정합니다. 최근 가격이 거의 변하지 않았으면 더 긴 구간으로 대신 계산합니다.',
+      '추세는 최근 ' + WIN.trend + U + ' 종가의 회귀 기울기를 기준가로 나눈 ' + U + '간 변화율에 추세 반영도를 곱하고, 한 봉이 지날 때마다 20%씩 줄입니다.',
+      '볼린저 평균회귀는 ' + WIN.bb + U + '선(밴드 중심)과 기준가의 간격을 한 봉에 1−e^(−0.1×반영도)만큼씩 메우는 방향의 힘입니다.',
+      '상승·보합·하락 확률은 기준 종가 대비 누적 변화율이 보합 폭(' + LAB.first + ' ±' + b1 + '%, 마지막 예측일 ±' + b2 + '%, 사이는 직선 보간)을 넘어 오르는지, 넘어 내리는지, 그 안에 머무는지를 같은 분포에서 구한 값입니다. 보합 폭은 제가 정한 약속이며 시장의 정의가 아닙니다.',
+      LAB.per + ' 확률은 Φ(그 봉 기대 변화율 ÷ σ), 누적 상승 확률은 Φ(누적 기대 변화율 ÷ σ√t)입니다. 레벨 확률은 같은 분포에서 구합니다.'
+    ];
+    document.getElementById('how-list').innerHTML = items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+    document.getElementById('h-t').textContent = '0은 추세 무시, 1은 최근 ' + WIN.trend + U + ' 기울기를 그대로 반영합니다.';
+    document.getElementById('h-m').textContent = '0은 무시, 1은 ' + WIN.bb + U + '선과의 간격을 한 봉에 약 10%씩 메웁니다.';
+    document.getElementById('pbh-r').textContent = LAB.per;
+  }
+  function updateLimits() {
+    var pr = FC0.params;
+    document.getElementById('lim').textContent =
+      '반영도 기본값 ' + DEF.wT.toFixed(2) + '와 ' + DEF.wM.toFixed(2) + '는 제가 정한 가정이고 과거 데이터로 검증한 값이 아닙니다. 확률이 50%에서 벗어나는 폭은 작아서 표본 오차 안에 있을 수 있습니다. 보합 폭(±' + (pr.flat_band_first * 100).toFixed(1) + '%, ±' + (pr.flat_band_last * 100).toFixed(1) + '%)은 제가 정한 약속입니다. 평가가격은 갱신되지 않아 전봉과 같은 값이 이어지는 날이 많아, 봉 방향 확률이 실제보다 단순하게 나올 수 있습니다. 뉴스 갭, 휴장일(' + (DATA.meta.freq === 'W' ? '주간은 7일 간격으로 계산' : '주말만 제외하고 계산') + ')은 모델에 들어 있지 않습니다. 봉은 ' + DATA.meta.n_bars_total + '개 중 최근 ' + NA + '개를 화면에 사용했습니다.';
+  }
+
+  function updateForecast() {
+    var M = MODEL, rows = M.rows;
+    var ups = rows.map(function (r) { return r.pUp; });
+    var lo = Math.min.apply(null, ups), hi = Math.max.apply(null, ups);
+    var tilt = (lo + hi) / 2 - 0.5;
+    var head = Math.abs(tilt) < 0.03 ? LAB.per + '은 사실상 반반입니다' : (tilt > 0 ? LAB.per + '이 상승 쪽으로 약하게 기울어 있습니다' : LAB.per + '이 하락 쪽으로 약하게 기울어 있습니다');
+    var bl = Math.min.apply(null, rows.map(function (r) { return r.pBelow; }));
+    var bh = Math.max.apply(null, rows.map(function (r) { return r.pBelow; }));
+    var rn = rows[NF - 1];
+    document.getElementById('fc-sum').textContent =
+      head + ' (상승 ' + pct(lo) + '~' + pct(hi) + '). 방향보다 폭이 큽니다. ' + U + ' 변동성이 ' + (M.sd * 100).toFixed(2) + '%라서 ' + fd(FD[NF - 1]) + '까지 1σ 범위가 ' + fx(rn.lo1) + '–' + fx(rn.hi1) + '입니다. 예측일별 종가가 ' + fl(LVLO) + ' 아래일 확률은 ' + pct(bl) + '~' + pct(bh) + '입니다.';
+
+    document.getElementById('readout').innerHTML = [
+      [U + ' 변동성 σ (' + WIN.vol + U + ')', (M.sd * 100).toFixed(2) + '%'],
+      ['볼린저 중심 (' + WIN.bb + U + '선)', fx(M.bb.mid)],
+      ['볼린저 하단 · 상단', fx(M.bb.lo) + ' · ' + fx(M.bb.up)],
+      ['%b (밴드 안 위치)', M.pb.toFixed(2)],
+      ['밴드폭', (M.bw * 100).toFixed(1) + '%'],
+      [WIN.trend + U + ' 추세 기울기', (M.slope < 0 ? MINUS : '+') + num(Math.abs(M.slope), mdg()) + ' /봉']
+    ].map(function (x) { return '<div class="ro"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div></div>'; }).join('');
+
+    document.getElementById('pbars').innerHTML = rows.map(function (r, k) {
+      var d = FD[k], dn = 1 - r.pUp;
+      return '<div class="pb"><span class="dt">' + d.m + '/' + d.d + ' (' + d.wd + ')</span>' +
+        '<div class="pbar" role="img" aria-label="하락 ' + pct(dn) + ', 상승 ' + pct(r.pUp) + '"><span class="dn" style="flex:' + (dn * 100).toFixed(2) + '"></span><span class="up" style="flex:' + (r.pUp * 100).toFixed(2) + '"></span></div>' +
+        '<span class="num"><span class="glyph dn">▼</span>' + pct(dn) + ' <span class="glyph up">▲</span>' + pct(r.pUp) + '</span></div>';
+    }).join('');
+
+    document.getElementById('ftbl').innerHTML =
+      '<thead><tr><th>날짜</th><th>기대 종가</th><th>1σ 범위 (68%)</th><th>2σ 범위 (95%)</th><th>누적 상승 확률</th><th>' + fl(LVLO) + ' 아래 마감</th><th>' + fl(LVHI) + ' 위 마감</th></tr></thead><tbody>' +
+      rows.map(function (r, k) {
+        var d = FD[k];
+        return '<tr><td>' + d.m + '/' + d.d + ' (' + d.wd + ')</td><td>' + fx(r.center) + '</td><td>' + fx(r.lo1) + ' – ' + fx(r.hi1) + '</td><td>' + fx(r.lo2) + ' – ' + fx(r.hi2) + '</td><td>' + pct(r.cum) + '</td><td>' + pct(r.pBelow) + '</td><td>' + pct(r.pAbove) + '</td></tr>';
+      }).join('') + '</tbody>';
+    updateDirection();
+    updateLevelProbs();
+  }
+
+  // ── 갈림길 레벨표 ───────────────────────────────────────────
+  function ladderRow(price, basis) {
+    return '<li><span class="p">' + price + '</span><span class="b">' + esc(basis) + '</span></li>';
+  }
+  function updateLadders() {
+    var last = D[N - 1].c, band = PAT.floor_band, tri = PAT.triangle;
+    var sup = LV.filter(function (l) { return l.kind === 'S'; }).sort(function (a, b) { return b.v - a.v; });
+    var res = LV.filter(function (l) { return l.kind === 'R'; }).sort(function (a, b) { return a.v - b.v; });
+    var dn = '';
+    if (band) dn += ladderRow(fl(band.lo) + '–' + fl(band.hi), '최근 ' + band.window + '봉 중 ' + band.touches + '번 종가가 내려앉은 밴드. 최저 ' + fx(band.lo));
+    sup.forEach(function (l) {
+      if (band && l.v >= band.lo && l.v <= band.hi) return;
+      dn += ladderRow(fl(l.v), l.label + ' · ' + l.basis);
+    });
+    document.getElementById('ld-dn').innerHTML = dn || '<li><span class="b">아래쪽 레벨이 없습니다.</span></li>';
+    document.getElementById('cond-dn').textContent = band
+      ? '바닥 밴드 ' + fl(band.lo) + '–' + fl(band.hi) + '을 종가로 이탈하면 아래 레벨이 차례로 열립니다.'
+      : (sup.length ? '가까운 지지 ' + fl(sup[0].v) + ' 아래로 종가가 내려가면 다음 레벨이 열립니다.' : '뚜렷한 지지 레벨이 없습니다.');
+    document.getElementById('ld-up').innerHTML = res.map(function (l) { return ladderRow(fl(l.v), l.label + ' · ' + l.basis); }).join('') || '<li><span class="b">위쪽 레벨이 없습니다.</span></li>';
+    var firstRes = res.filter(function (l) { return l.priority >= 2 && l.v / last - 1 <= 0.05; })[0] || res[0];
+    document.getElementById('cond-up').textContent = firstRes
+      ? fl(firstRes.v) + ' 위 종가가 첫 신호입니다. 현재가 ' + fx(last) + '에서 ' + ((firstRes.v / last - 1) * 100).toFixed(1) + '% 위입니다.'
+      : '뚜렷한 저항 레벨이 없습니다.';
+    document.getElementById('target').textContent = tri
+      ? '하락 삼각형의 교과서적 목표는 높이 약 ' + fx(tri.height) + '(' + esc(DATA.meta.unit_label) + ')를 바닥 아래로 투영한 ' + fx(tri.target) + ' 안팎입니다. 패턴이 맞다는 보장은 없습니다.'
+      : '';
+  }
+
+  function updateNotes() {
+    var h = '';
+    if (CUR && DATA && !DATA.error) {
+      var m = DATA.meta;
+      h += '<p>데이터: ' + esc(m.source) + ' · ' + esc(m.code) + ' ' + esc(m.name) + '. 마지막 입력 ' + esc(m.last_bar_date) + ', 전체 ' + m.n_bars_total + '봉(' + esc(m.first_bar_date) + '~). 종가(평가가격)만 있어 시가·고가·저가·거래량은 없고, 레벨·바닥 밴드·고점 추세선도 종가 기준입니다.</p>';
+      (m.notes || []).forEach(function (t) { h += '<p>참고: ' + esc(t) + '</p>'; });
+    } else {
+      h += '<p>데이터: Platts 평가가격(수동 입력). 가격은 사용자가 알려 준 값으로만 갱신되며 자동 수집하지 않습니다.</p>';
+    }
+    h += '<p>이동평균, 볼린저밴드, 레벨, 패턴, 예측은 위 종가로 자동 계산한 값입니다. 바닥 밴드와 하락 삼각형은 규칙으로 찾은 해석이며 예측 확률은 위 가정에 따른 계산 결과입니다. 투자 판단과 책임은 본인에게 있습니다.</p>';
+    document.getElementById('notes').innerHTML = h;
+  }
+
+  // ── 가격대별 확률(주요 레벨을 넘어·깨고 마감할 확률, 기간 중 터치 근사) ──
+  function levelProb(v, r) {
+    var P0 = MODEL.P0, M = Math.log(r.center / P0), SD = MODEL.sd * Math.sqrt(r.t);
+    var pAbove = 1 - Phi((Math.log(v / P0) - M) / SD);
+    var up = v >= P0, beyond = up ? pAbove : 1 - pAbove;
+    return { up: up, pAbove: pAbove, beyond: beyond, touch: Math.min(1, 2 * beyond) };
+  }
+  function levelRows() {
+    var P0 = MODEL.P0, rs = [MODEL.rows[0], MODEL.rows[NF - 1]];
+    return LV.filter(function (l) { return Math.abs(l.v / P0 - 1) <= 0.10; })
+      .sort(function (a, b) { return b.v - a.v; })
+      .map(function (l) {
+        return { v: l.v, label: l.label, basis: l.basis, up: l.v >= P0, hz: rs.map(function (r) { return levelProb(l.v, r); }) };
+      });
+  }
+  function lvCell(h, up) {
+    var tag = up ? '넘어 마감' : '깨고 마감';
+    return '<div class="lvh"><div class="lvbar" role="img" aria-label="' + tag + ' ' + pct(h.beyond) + '"><span style="width:' + (h.beyond * 100).toFixed(1) + '%"></span></div>' +
+      '<div class="lvnum">' + pct(h.beyond) + '<small>' + tag + '</small><small>· 기간 중 터치 ≈' + Math.round(h.touch * 100) + '%</small></div></div>';
+  }
+  function updateLevelProbs() {
+    var rows = levelRows(), P0 = MODEL.P0, out = '', placed = false;
+    out += '<div class="lvrow lvhd"><span>가격</span><span>의미</span><span>' + fd(FD[0]) + ' (' + esc(LAB.first) + ')</span><span>' + fd(FD[NF - 1]) + ' (' + esc(LAB.last) + ')</span></div>';
+    function now() { return '<div class="lvnow">▶ 기준 종가 ' + fx(P0) + ' (' + fd(D[N - 1]) + ' 기준)</div>'; }
+    rows.forEach(function (x) {
+      if (!placed && !x.up) { out += now(); placed = true; }
+      out += '<div class="lvrow ' + (x.up ? 'up' : 'dn') + '"><span class="lvp">' + fl(x.v) + '</span>' +
+        '<span class="lvn">' + esc(x.label) + '<small>' + (x.up ? '▲ 위 레벨' : '▼ 아래 레벨') + '</small></span>' + lvCell(x.hz[0], x.up) + lvCell(x.hz[1], x.up) + '</div>';
+    });
+    if (!placed) out += now();
+    document.getElementById('lvlist').innerHTML = out;
+    document.getElementById('lv-note').textContent = '막대와 큰 숫자는 그날 종가가 그 가격을 넘어(위 레벨) 또는 깨고(아래 레벨) 마감할 확률입니다. 기간 중 터치는 마감 확률의 2배(최대 100%)로 근사한 값이라 정확하지 않을 수 있고, 둘 다 검증 전 가정(정규분포, 일정한 변동성) 기반 계산입니다. 위 슬라이더 설정이 그대로 반영됩니다.';
+  }
+
+  // ── 방향 확률(상승·보합·하락) ───────────────────────────────
+  function edgeGap() { return FC0.params.edge_min_gap != null ? FC0.params.edge_min_gap : 0.10; }
+  function edgeInfo(r) {
+    var diff = r.p3Up - r.p3Dn, ad = (Math.abs(diff) * 100).toFixed(1);
+    if (Math.abs(diff) < edgeGap()) return { text: '상승·하락 우위 없음 (차이 ' + ad + '%p)', tone: 'none' };
+    return { text: (diff > 0 ? '상승' : '하락') + ' 확률이 ' + (diff > 0 ? '하락' : '상승') + '보다 ' + ad + '%p 높음', tone: diff > 0 ? 'up' : 'dn' };
+  }
+  function dirPicks() {
+    var rows = MODEL.rows, out = [{ r: rows[0], d: FD[0], title: LAB.first }];
+    if (NF > 1) out.push({ r: rows[NF - 1], d: FD[NF - 1], title: LAB.last });
+    return out;
+  }
+  function dirCard(x) {
+    var r = x.r, P0 = MODEL.P0, e = edgeInfo(r);
+    var lo = P0 * (1 - r.band), hi = P0 * (1 + r.band);
+    return '<div class="dircard"><div class="when">' + esc(x.title) + '<span>' + x.d.m + '/' + x.d.d + ' (' + x.d.wd + ')</span></div>' +
+      '<div class="dbar" role="img" aria-label="하락 ' + pct(r.p3Dn) + ', 보합 ' + pct(r.p3Flat) + ', 상승 ' + pct(r.p3Up) + '">' +
+      '<span class="dn" style="flex:' + (r.p3Dn * 100).toFixed(2) + '"></span><span class="fl" style="flex:' + (r.p3Flat * 100).toFixed(2) + '"></span><span class="up" style="flex:' + (r.p3Up * 100).toFixed(2) + '"></span></div>' +
+      '<div class="dleg"><span><span class="glyph dn">▼</span> 하락 ' + pct(r.p3Dn) + '</span><span class="c">■ 보합 ' + pct(r.p3Flat) + '</span><span class="r"><span class="glyph up">▲</span> 상승 ' + pct(r.p3Up) + '</span></div>' +
+      '<div class="dedge">' + esc(e.text) + '</div>' +
+      '<div class="dnote">보합 = 기준 종가 ' + fx(P0) + ' 대비 ±' + (r.band * 100).toFixed(1) + '% (' + fx(lo) + '–' + fx(hi) + ') 이내 마감 · 기대 종가 ' + fx(r.center) + ' · 1σ ' + fx(r.lo1) + '–' + fx(r.hi1) + '</div></div>';
+  }
+  function updateDirection() {
+    document.getElementById('dir-grid').innerHTML = dirPicks().map(dirCard).join('');
+    document.getElementById('dir-note').textContent = '기준 종가 대비 누적 변화율이 보합 폭을 넘어 오르면 상승, 넘어 내리면 하락, 그 안이면 보합입니다. 보합 폭은 약속이고 확률은 검증되지 않은 가정 기반 계산입니다. 위 슬라이더 설정이 그대로 반영됩니다.';
+  }
+
+  // ── 캡처 모드: 공유용 카드(SVG → PNG) ────────────────────────
+  var CAP = { ink: '#111111', grey: '#666660', line: '#d9dad6', up: '#e34948', dn: '#2a78d6', fl: '#8a8a85', bg: '#ffffff' };
+  var CAP_FONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif';
+  function charW(ch, fs) {
+    var c = ch.charCodeAt(0);
+    if (ch === ' ') return 0.3 * fs;
+    return ((c >= 0x2e80 && c <= 0xd7ff) || (c >= 0xff00 && c <= 0xffef) ? 1.0 : 0.56) * fs;
+  }
+  function textW(t, fs) { var w = 0; for (var i = 0; i < t.length; i++) w += charW(t.charAt(i), fs); return w; }
+  function wrapLines(text, maxW, fs, maxLines) {
+    var words = String(text).split(' '), lines = [], cur = '', i, j;
+    function push(t) { if (t) lines.push(t); }
+    for (i = 0; i < words.length; i++) {
+      var w = words[i], cand = cur ? cur + ' ' + w : w;
+      if (textW(cand, fs) <= maxW) { cur = cand; continue; }
+      push(cur); cur = '';
+      if (textW(w, fs) <= maxW) { cur = w; continue; }
+      for (j = 0; j < w.length; j++) {
+        var c2 = cur + w.charAt(j);
+        if (textW(c2, fs) > maxW) { push(cur); cur = w.charAt(j); } else { cur = c2; }
+      }
+    }
+    push(cur);
+    if (lines.length > maxLines) {
+      lines = lines.slice(0, maxLines);
+      lines[maxLines - 1] = lines[maxLines - 1].replace(/.$/, '') + '…';
+    }
+    return lines;
+  }
+  function svgText(x, y, t, fs, fill, weight, anchor) {
+    return '<text x="' + x + '" y="' + y + '" font-size="' + fs + '" fill="' + fill + '"' + (weight ? ' font-weight="' + weight + '"' : '') + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + esc(t) + '</text>';
+  }
+  function niceStep(range, target) { // 1·2·2.5·5·10 계열의 보기 좋은 눈금 간격
+    var raw = range / (target || 5), p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), f = raw / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+  }
+  function axisFmt(v, step) { // 눈금 간격에 맞는 소수 자릿수로 서식
+    var s = String(+step.toFixed(6)), dec = s.indexOf('.') < 0 ? 0 : Math.min(3, s.split('.')[1].length);
+    return num(v, dec);
+  }
+  function capBlock(y, x0, w, x) {
+    var r = x.r, P0 = MODEL.P0, e = edgeInfo(r), out = '';
+    out += svgText(x0, y + 34, x.title + ' · ' + x.d.m + '/' + x.d.d + '(' + x.d.wd + ')', 32, CAP.ink, 700);
+    var by = y + 54, bh = 56, gap = 4, avail = w - 2 * gap;
+    var wd = Math.max(r.p3Dn * avail, 2), wf = Math.max(r.p3Flat * avail, 2), wu = Math.max(r.p3Up * avail, 2);
+    out += '<rect x="' + x0 + '" y="' + by + '" width="' + wd.toFixed(1) + '" height="' + bh + '" rx="6" fill="' + CAP.dn + '"/>';
+    out += '<rect x="' + (x0 + wd + gap).toFixed(1) + '" y="' + by + '" width="' + wf.toFixed(1) + '" height="' + bh + '" fill="' + CAP.fl + '"/>';
+    out += '<rect x="' + (x0 + wd + wf + 2 * gap).toFixed(1) + '" y="' + by + '" width="' + wu.toFixed(1) + '" height="' + bh + '" rx="6" fill="' + CAP.up + '"/>';
+    var ly = by + bh + 40;
+    out += svgText(x0, ly, '▼ 하락 ' + pct(r.p3Dn), 32, CAP.dn, 700);
+    out += svgText(x0 + w / 2, ly, '보합 ' + pct(r.p3Flat), 32, CAP.fl, 700, 'middle');
+    out += svgText(x0 + w, ly, '▲ 상승 ' + pct(r.p3Up), 32, CAP.up, 700, 'end');
+    var tone = e.tone === 'up' ? CAP.up : e.tone === 'dn' ? CAP.dn : CAP.grey;
+    out += svgText(x0, ly + 38, e.text, 25, tone, 700);
+    out += svgText(x0, ly + 70, '기대 종가 ' + fx(r.center) + ' · 1σ ' + fx(r.lo1) + '–' + fx(r.hi1) + ' · 보합 ±' + (r.band * 100).toFixed(1) + '%', 24, CAP.grey);
+    return out;
+  }
+  function capChart(x0, y0, w, h) {
+    var NH = Math.min(40, CLOSES.length), hist = CLOSES.slice(CLOSES.length - NH), rows = MODEL.rows, P0 = MODEL.P0, k;
+    var span = NH - 1 + NF;
+    var pickLv = function (kind) {
+      return LV.filter(function (l) { return l.kind === kind && Math.abs(l.v / P0 - 1) < 0.12; })
+        .sort(function (a, b) { return Math.abs(a.v - P0) - Math.abs(b.v - P0); }).slice(0, 2);
+    };
+    var lvls = pickLv('R').concat(pickLv('S'));
+    var vals = hist.slice();
+    rows.forEach(function (r) { vals.push(r.lo2, r.hi2); });
+    lvls.forEach(function (l) { vals.push(l.v); });
+    var vmin = Math.min.apply(null, vals), vmax = Math.max.apply(null, vals), pad = (vmax - vmin) * 0.06;
+    if (!(vmax > vmin)) { vmin = P0 * 0.98; vmax = P0 * 1.02; pad = 0; }
+    vmin -= pad; vmax += pad;
+    var plotL = x0 + 84, plotR = x0 + w - 190, plotT = y0 + 44, plotB = y0 + h - 34, labX = plotR + 14;
+    var X = function (idx) { return plotL + idx / span * (plotR - plotL); };
+    var Y = function (v) { return plotB - (v - vmin) / (vmax - vmin) * (plotB - plotT); };
+    var out = svgText(x0, y0 + 26, '최근 ' + NH + '봉 종가와 ' + NF + '봉 예측 범위', 26, CAP.ink, 700);
+    var step = niceStep(vmax - vmin, 4), t0 = Math.ceil(vmin / step) * step;
+    for (var tv = t0; tv <= vmax; tv += step) {
+      out += '<line x1="' + plotL + '" x2="' + plotR + '" y1="' + Y(tv).toFixed(1) + '" y2="' + Y(tv).toFixed(1) + '" stroke="' + CAP.line + '" stroke-width="1"/>';
+      out += svgText(plotL - 10, (Y(tv) + 7).toFixed(1), axisFmt(tv, step), 20, CAP.grey, 0, 'end');
+    }
+    var xl = X(NH - 1), yl = Y(P0), up2 = [xl.toFixed(1) + ',' + yl.toFixed(1)], dn2 = [], up1 = [xl.toFixed(1) + ',' + yl.toFixed(1)], dn1 = [], cen = [xl.toFixed(1) + ',' + yl.toFixed(1)];
+    for (k = 0; k < rows.length; k++) {
+      var xk = X(NH + k).toFixed(1);
+      up2.push(xk + ',' + Y(rows[k].hi2).toFixed(1)); dn2.unshift(xk + ',' + Y(rows[k].lo2).toFixed(1));
+      up1.push(xk + ',' + Y(rows[k].hi1).toFixed(1)); dn1.unshift(xk + ',' + Y(rows[k].lo1).toFixed(1));
+      cen.push(xk + ',' + Y(rows[k].center).toFixed(1));
+    }
+    out += '<polygon points="' + up2.concat(dn2).join(' ') + '" fill="rgba(17,17,17,0.07)"/>';
+    out += '<polygon points="' + up1.concat(dn1).join(' ') + '" fill="rgba(17,17,17,0.15)"/>';
+    var ys = lvls.map(function (l) { return { l: l, y: Y(l.v) }; }).sort(function (a, b) { return a.y - b.y; }), prev = -99;
+    ys.forEach(function (o) {
+      var col = o.l.v > P0 ? CAP.up : CAP.dn, ty = o.y + 7;
+      if (ty - prev < 26) ty = prev + 26;
+      prev = ty;
+      out += '<line x1="' + plotL + '" x2="' + plotR + '" y1="' + o.y.toFixed(1) + '" y2="' + o.y.toFixed(1) + '" stroke="' + col + '" stroke-width="2" stroke-dasharray="8 6" opacity="0.75"/>';
+      out += svgText(labX, ty.toFixed(1), fl(o.l.v) + ' ' + o.l.label, 19, col, 700);
+    });
+    var pts = hist.map(function (v, idx) { return X(idx).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ');
+    out += '<polyline points="' + pts + '" fill="none" stroke="' + CAP.ink + '" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    out += '<polyline points="' + cen.join(' ') + '" fill="none" stroke="' + CAP.ink + '" stroke-width="2.5" stroke-dasharray="6 6"/>';
+    out += '<circle cx="' + xl.toFixed(1) + '" cy="' + yl.toFixed(1) + '" r="7" fill="' + CAP.ink + '"/>';
+    var dA = mkDay(ALL[ALL.length - NH].date), dZ = ALL[ALL.length - 1], dF = FD[NF - 1];
+    out += svgText(plotL, plotB + 26, dA.m + '/' + dA.d, 20, CAP.grey, 0, 'start');
+    out += svgText(xl.toFixed(1), plotB + 26, dZ.m + '/' + dZ.d, 20, CAP.ink, 700, 'middle');
+    out += svgText(xl.toFixed(1), (yl - 18).toFixed(1), fx(P0), 24, CAP.ink, 700, 'middle');
+    out += svgText(plotR, plotB + 26, dF.m + '/' + dF.d, 20, CAP.grey, 0, 'end');
+    return out;
+  }
+  function capLevelTable(y, x0, w) {
+    var P0 = MODEL.P0, rs = [MODEL.rows[0], MODEL.rows[NF - 1]];
+    var pick = function (kind) {
+      return LV.filter(function (l) { return l.kind === kind && Math.abs(l.v / P0 - 1) < 0.12; })
+        .sort(function (a, b) { return Math.abs(a.v - P0) - Math.abs(b.v - P0); }).slice(0, 2);
+    };
+    var list = pick('R').concat(pick('S')).sort(function (a, b) { return b.v - a.v; });
+    var c1 = x0 + w - 190, c2 = x0 + w, out = '';
+    out += svgText(x0, y + 26, '가격대별 확률 (종가 기준)', 26, CAP.ink, 700);
+    out += svgText(c1, y + 26, fd(FD[0]), 22, CAP.grey, 500, 'end');
+    out += svgText(c2, y + 26, fd(FD[NF - 1]), 22, CAP.grey, 500, 'end');
+    list.forEach(function (l, i) {
+      var up = l.v >= P0, col = up ? CAP.up : CAP.dn, yy = y + 70 + i * 40;
+      out += svgText(x0, yy, (up ? '▲ ' : '▼ ') + fl(l.v) + ' ' + l.label + (up ? ' 넘어 마감' : ' 깨고 마감'), 27, col, 700);
+      out += svgText(c1, yy, Math.round(levelProb(l.v, rs[0]).beyond * 100) + '%', 30, col, 700, 'end');
+      out += svgText(c2, yy, Math.round(levelProb(l.v, rs[1]).beyond * 100) + '%', 30, col, 700, 'end');
+    });
+    return out;
+  }
+  function capIndLine() {
+    var d = ALL[ALL.length - 1], parts = [], lv = MAS[3][N - 1];
+    if (lv != null) parts.push(WIN.ma[3] + U + '선 ' + (d.c > lv ? '위' : '아래'));
+    if (d.rsi != null) parts.push('RSI ' + d.rsi.toFixed(0));
+    if (d.macd != null && d.sig != null) parts.push('MACD 시그널 ' + (d.macd > d.sig ? '위' : '아래'));
+    return parts.length ? '지표: ' + parts.join(' · ') : '';
+  }
+  function buildCard() {
+    var W = 1080, H = 1350, X0 = 60, CW = 960, m = DATA.meta, last = ALL[ALL.length - 1];
+    var chg = last.chg == null ? '' : ' (' + sgn(last.chg) + ')';
+    var picks = dirPicks(), out = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" font-family=\'' + CAP_FONT + '\'>';
+    out += '<rect width="' + W + '" height="' + H + '" fill="' + CAP.bg + '"/>';
+    out += svgText(X0, 92, m.label + ' 기술적 분석', 46, CAP.ink, 700);
+    out += svgText(X0, 140, last.m + '/' + last.d + '(' + last.wd + ') 종가 ' + fx(last.c) + chg + ' · ' + m.unit_label, 28, CAP.grey);
+    out += capBlock(176, X0, CW, picks[0]);
+    if (picks[1]) out += capBlock(426, X0, CW, picks[1]);
+    out += capChart(X0, 656, CW, 250);
+    out += capLevelTable(924, X0, CW);
+    var il = capIndLine();
+    if (il) out += svgText(X0, 1160, il, 24, CAP.ink, 700);
+    var vl = wrapLines(DATA.verdict, CW, 26, 2);
+    vl.forEach(function (t, i) { out += svgText(X0, 1204 + i * 34, t, 26, CAP.ink, 500); });
+    out += '<line x1="' + X0 + '" x2="' + (W - X0) + '" y1="1250" y2="1250" stroke="' + CAP.line + '" stroke-width="2"/>';
+    var foot = wrapLines('자동 계산 결과이며 검증 전 가정 기반입니다. 투자 판단과 책임은 본인에게 있습니다.', CW, 21, 2);
+    foot.forEach(function (t, i) { out += svgText(X0, 1282 + i * 28, t, 21, CAP.grey); });
+    out += svgText(X0, 1334, '데이터 Platts 평가가격 · 추세 ' + S.wT.toFixed(2) + ' / 회귀 ' + S.wM.toFixed(2) + ' · 생성 ' + m.generated_at, 18, CAP.fl);
+    return out + '</svg>';
+  }
+  function capBlob(cb) {
+    var svg = document.getElementById('cap-card').querySelector('svg');
+    if (!svg) { cb(null); return; }
+    var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+    var img = new Image();
+    img.onload = function () {
+      var c = document.createElement('canvas');
+      c.width = 1080; c.height = 1350;
+      var g = c.getContext('2d');
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      try { c.toBlob(function (b) { cb(b); }, 'image/png'); } catch (e) { cb(null); }
+    };
+    img.onerror = function () { cb(null); };
+    img.src = url;
+  }
+  function capName() { return DATA.meta.key.toLowerCase() + '-forecast-' + DATA.forecast.asof.replace(/-/g, '') + '.png'; }
+  var capReturn = null;
+  function openCap() {
+    document.getElementById('cap-card').innerHTML = buildCard();
+    document.getElementById('cap-hint').textContent = '현재 슬라이더 설정(추세 ' + S.wT.toFixed(2) + ' / 회귀 ' + S.wM.toFixed(2) + ')이 반영된 카드입니다. PNG로 저장하거나 화면을 캡처해서 공유하세요.';
+    var sh = document.getElementById('cap-share');
+    sh.hidden = true;
+    try {
+      var tf = new File(['x'], 'a.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [tf] })) sh.hidden = false;
+    } catch (e) { sh.hidden = true; }
+    capReturn = document.activeElement;
+    document.getElementById('capov').hidden = false;
+    document.getElementById('cap-close').focus();
+  }
+  function closeCap() {
+    document.getElementById('capov').hidden = true;
+    if (capReturn && capReturn.focus) capReturn.focus();
+  }
+  function capSaveLink(b) {  // 일반 브라우저(로컬 파일)용 저장: 임시 링크를 눌러 내려받음
+    var a = document.createElement('a'), u = URL.createObjectURL(b);
+    a.href = u; a.download = capName();
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+  }
+  function capSave() {
+    capBlob(function (b) {
+      var hint = document.getElementById('cap-hint');
+      if (!b) { hint.textContent = '이미지를 만들지 못했습니다. 화면을 캡처해서 사용하세요.'; return; }
+      var useP = (window.claude && window.claude.use) ? window.claude.use('downloads') : Promise.resolve(null);  // 게시된 페이지에서는 downloads 기능으로 저장
+      useP.then(function (dl) {
+        if (!dl) { capSaveLink(b); return; }  // 기능이 없으면(로컬 파일) 링크 방식
+        return dl.save({ filename: capName(), data: b }).catch(function (e) {
+          if (e && e.code === 'declined') return;  // 사용자가 취소한 경우는 조용히 넘어감
+          hint.textContent = '이 화면에서는 저장할 수 없습니다. 화면을 캡처해서 사용하세요.';
+        });
+      }).catch(function () { capSaveLink(b); });
+    });
+  }
+  function capShare() {
+    capBlob(function (b) {
+      if (!b) { document.getElementById('cap-hint').textContent = '이미지를 만들지 못했습니다. 화면을 캡처해서 사용하세요.'; return; }
+      var f = new File([b], capName(), { type: 'image/png' });
+      navigator.share({ files: [f], title: DATA.meta.label + ' 기술적 분석' }).catch(function () {});
+    });
+  }
+
+  // ── 차트 ────────────────────────────────────────────────────
+  var host = document.getElementById('svgHost');
+  var wrap = document.getElementById('wrap');
+  var tt = document.getElementById('tt');
+  var L = null, cur = null, hov = null, hovLine = null;
+
+  function idxOfDate(ds) {
+    for (var z = 0; z < N; z++) if (D[z].date === ds) return z;
+    return -1;
+  }
+
+  function render() {
+    if (!CUR || !DATA || DATA.error || !MODEL) return;
+    var W = Math.max(300, Math.floor(wrap.clientWidth));
+    var narrow = W < 640;
+    var FC = MODEL.rows, P0 = MODEL.P0;
+
+    // 세로 범위: 종가, 2σ 예측 범위, 표시할 레벨을 모두 담는다
+    var lo = Math.min(Math.min.apply(null, D.map(function (d) { return d.c; })), Math.min.apply(null, FC.map(function (r) { return r.lo2; })));
+    var hi = Math.max(Math.max.apply(null, D.map(function (d) { return d.c; })), Math.max.apply(null, FC.map(function (r) { return r.hi2; })));
+    var shown = LV.filter(function (l) { return Math.abs(l.v / P0 - 1) <= 0.10; });
+    shown.forEach(function (l) { lo = Math.min(lo, l.v); hi = Math.max(hi, l.v); });
+    if (!(hi > lo)) { lo = P0 * 0.98; hi = P0 * 1.02; }
+    var padv = (hi - lo) * 0.04;
+    lo -= padv; hi += padv;
+    var gs = niceStep(hi - lo, 5);
+    var YMIN = Math.floor(lo / gs) * gs, YMAX = Math.ceil(hi / gs) * gs;
+    var nGrid = Math.round((YMAX - YMIN) / gs), maxLab = 0, gi;
+    for (gi = 0; gi <= nGrid; gi++) maxLab = Math.max(maxLab, axisFmt(YMIN + gi * gs, gs).length);
+
+    var m = { l: Math.max(40, 12 + maxLab * 7), r: narrow ? 56 : 150, t: 14, b: 24 };
+    var Hmain = Math.round(Math.max(300, Math.min(480, W * 0.5)));
+    var rH = narrow ? 56 : 72, mH = narrow ? 64 : 84;
+    var mainBot = Hmain - m.b; // 가격 패널 아래 끝
+    var rsiTop = mainBot + 26, rsiBot = rsiTop + rH, macdTop = rsiBot + 22, macdBot = macdTop + mH;
+    var H = SUB ? macdBot + m.b : Hmain;
+    var pw = W - m.l - m.r;
+    var ph = mainBot - m.t;
+    var step = pw / NS;
+
+    function X(i) { return m.l + step * (i + 0.5); }
+    function Y(v) { return m.t + (YMAX - v) / (YMAX - YMIN) * ph; }
+    var xr = m.l + pw;
+    var x0 = X(N - 1);
+    var s = '';
+
+    s += '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(DATA.meta.label) + ' 종가 차트와 ' + fd(FD[0]) + '부터 ' + fd(FD[NF - 1]) + '까지의 예측 밴드' + (SUB ? ', RSI와 MACD 패널' : '') + '. 마지막 종가 ' + fx(P0) + '">';
+    s += '<defs><clipPath id="pclip"><rect x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '"/></clipPath></defs>';
+
+    for (gi = 0; gi <= nGrid; gi++) {
+      var gv = YMIN + gi * gs;
+      s += '<line class="grid" x1="' + m.l + '" x2="' + xr + '" y1="' + Y(gv) + '" y2="' + Y(gv) + '"/>';
+      s += '<text class="axis" x="' + (m.l - 6) + '" y="' + (Y(gv) + 4) + '" text-anchor="end">' + axisFmt(gv, gs) + '</text>';
+    }
+
+    s += '<g class="layer g-fc"><rect class="fz" x="' + x0 + '" y="' + m.t + '" width="' + (xr - x0) + '" height="' + ph + '"/>';
+    s += '<line class="fsep" x1="' + x0 + '" x2="' + x0 + '" y1="' + m.t + '" y2="' + mainBot + '"/>';
+    s += '<text class="lbl strong" x="' + (x0 + 6) + '" y="' + (m.t + 10) + '">예측</text></g>';
+
+    var k = Math.max(1, Math.ceil(52 / step));
+    for (var i = NS - 1; i >= 0; i -= k) {
+      var dd = i < N ? D[i] : FD[i - N];
+      s += '<text class="axis' + (i >= N ? ' fcd' : '') + '" x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + fd(dd) + '</text>';
+    }
+
+    // 레벨 라벨 위치 (겹치면 아래로 밀어냄)
+    var band = PAT.floor_band;
+    var labs = shown.map(function (l) {
+      return { y: Y(l.v), ty: Y(l.v), text: narrow ? fl(l.v) : fl(l.v) + ' ' + l.label, kind: 'lv' };
+    });
+    if (band) labs.push({ y: Y((band.lo + band.hi) / 2), ty: Y((band.lo + band.hi) / 2), text: narrow ? fl(band.lo) : fl(band.lo) + '–' + fl(band.hi) + ' 바닥', kind: 'band' });
+    labs.sort(function (a, b) { return a.y - b.y; });
+    for (var q = 1; q < labs.length; q++) {
+      if (labs[q].y - labs[q - 1].y < 13) labs[q].y = labs[q - 1].y + 13;
+    }
+
+    // 바닥 밴드와 고점 추세선 (패턴 레이어)
+    s += '<g class="layer g-pt">';
+    if (band) {
+      var bh = Math.max(6, Y(band.lo) - Y(band.hi)), yb = (Y(band.lo) + Y(band.hi)) / 2;
+      var bandLab = labs.filter(function (x) { return x.kind === 'band'; })[0];
+      s += '<rect class="band" x="' + m.l + '" y="' + (yb - bh / 2) + '" width="' + pw + '" height="' + bh + '"/>';
+      s += '<line class="tick" x1="' + xr + '" x2="' + (xr + 6) + '" y1="' + yb + '" y2="' + bandLab.y + '"/>';
+      s += '<text class="lbl strong" x="' + (xr + 9) + '" y="' + (bandLab.y + 4) + '">' + esc(bandLab.text) + '</text>';
+    }
+    var ht = PAT.high_trend;
+    if (ht && ht.direction !== 'flat') {
+      var ia = idxOfDate(ht.start_date), ib = idxOfDate(ht.end_date);
+      if (ia >= 0 && ib >= 0) s += '<line class="hl" x1="' + X(ia) + '" x2="' + X(ib) + '" y1="' + Y(ht.v0) + '" y2="' + Y(ht.v1) + '"/>';
+    }
+    s += '</g>';
+
+    // 지지·저항
+    s += '<g class="layer g-lv">';
+    shown.forEach(function (l) {
+      s += '<line class="lvl ' + l.kind + '" x1="' + m.l + '" x2="' + xr + '" y1="' + Y(l.v) + '" y2="' + Y(l.v) + '"/>';
+    });
+    labs.filter(function (x) { return x.kind === 'lv'; }).forEach(function (x) {
+      s += '<line class="tick" x1="' + xr + '" x2="' + (xr + 6) + '" y1="' + x.ty + '" y2="' + x.y + '"/>';
+      s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (x.y + 4) + '">' + esc(x.text) + '</text>';
+    });
+    s += '</g>';
+
+    // 볼린저밴드 (bb봉 이상부터 계산된 구간)
+    var up = '', lw = '', md = '', fill = '', idx = [];
+    for (var bi = 0; bi < N; bi++) if (BBS[bi]) idx.push(bi);
+    idx.forEach(function (bi2, n2) {
+      var b = BBS[bi2];
+      up += (n2 ? 'L' : 'M') + X(bi2) + ' ' + Y(b.up);
+      lw += (n2 ? 'L' : 'M') + X(bi2) + ' ' + Y(b.lo);
+      md += (n2 ? 'L' : 'M') + X(bi2) + ' ' + Y(b.mid);
+    });
+    if (idx.length) {
+      fill = up;
+      for (var bj = idx.length - 1; bj >= 0; bj--) fill += 'L' + X(idx[bj]) + ' ' + Y(BBS[idx[bj]].lo);
+      fill += 'Z';
+      s += '<g class="layer g-bb"><path class="bbf" d="' + fill + '"/><path class="bbl" d="' + up + '"/><path class="bbl" d="' + lw + '"/><path class="bbm" d="' + md + '"/></g>';
+    }
+
+    // 예측 팬
+    function fan(topKey, botKey) {
+      var d = 'M' + x0 + ' ' + Y(P0);
+      FC.forEach(function (r, kk) { d += 'L' + X(N + kk) + ' ' + Y(r[topKey]); });
+      for (var kk2 = FC.length - 1; kk2 >= 0; kk2--) d += 'L' + X(N + kk2) + ' ' + Y(FC[kk2][botKey]);
+      return d + 'Z';
+    }
+    var cl = 'M' + x0 + ' ' + Y(P0);
+    FC.forEach(function (r, kk) { cl += 'L' + X(N + kk) + ' ' + Y(r.center); });
+    s += '<g class="layer g-fc"><path class="fan2" d="' + fan('hi2', 'lo2') + '"/><path class="fan1" d="' + fan('hi1', 'lo1') + '"/><path class="fcl" d="' + cl + '"/></g>';
+
+    // 종가선과 마지막 점
+    var cp = '';
+    D.forEach(function (d, ci) { cp += (ci ? 'L' : 'M') + X(ci) + ' ' + Y(d.c); });
+    s += '<path class="line" d="' + cp + '"/>';
+    s += '<circle class="dotp" cx="' + x0 + '" cy="' + Y(D[N - 1].c) + '" r="3.5"/>';
+
+    // 이동평균(가격 범위 밖으로 나가도 차트 영역 안에서만 그림)
+    s += '<g class="layer g-ma" clip-path="url(#pclip)">';
+    MAS.forEach(function (arr, ix) {
+      var d = '';
+      arr.forEach(function (v, mi) {
+        if (v == null) return;
+        d += (d ? 'L' : 'M') + X(mi) + ' ' + Y(v);
+      });
+      s += '<path class="ma ma' + (ix + 1) + '" d="' + d + '"/>';
+    });
+    s += '</g>';
+
+    // 보조 패널: RSI
+    if (SUB) {
+      var RY = function (v) { return rsiBot - v / 100 * rH; };
+      s += '<g class="layer g-sub">';
+      s += '<rect class="rsiob" x="' + m.l + '" y="' + RY(100) + '" width="' + pw + '" height="' + (RY(70) - RY(100)) + '"/>';
+      s += '<rect class="rsios" x="' + m.l + '" y="' + RY(30) + '" width="' + pw + '" height="' + (RY(0) - RY(30)) + '"/>';
+      [70, 50, 30].forEach(function (v) {
+        s += '<line class="' + (v === 50 ? 'grid' : 'subg') + '" x1="' + m.l + '" x2="' + xr + '" y1="' + RY(v) + '" y2="' + RY(v) + '"/>';
+        if (v !== 50) s += '<text class="axis" x="' + (m.l - 6) + '" y="' + (RY(v) + 4) + '" text-anchor="end">' + v + '</text>';
+      });
+      s += '<line class="grid" x1="' + m.l + '" x2="' + xr + '" y1="' + rsiBot + '" y2="' + rsiBot + '"/>';
+      var rd = '';
+      D.forEach(function (d, ri) { if (d.rsi != null) rd += (rd ? 'L' : 'M') + X(ri) + ' ' + RY(d.rsi); });
+      if (rd) s += '<path class="rsil" d="' + rd + '"/>';
+      var lastD = D[N - 1];
+      s += '<text class="lbl strong" x="' + (xr + 9) + '" y="' + (rsiTop + 11) + '">' + (narrow ? 'RSI' : 'RSI(' + WIN.rsi + ')') + '</text>';
+      s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (rsiTop + 26) + '">' + (lastD.rsi == null ? '–' : lastD.rsi.toFixed(1)) + '</text>';
+      s += '</g>';
+
+      // 보조 패널: MACD
+      var mx = 0;
+      D.forEach(function (d) {
+        [d.macd, d.sig, d.hist].forEach(function (v) { if (v != null && Math.abs(v) > mx) mx = Math.abs(v); });
+      });
+      if (!(mx > 0)) mx = 1;
+      var mstep = niceStep(mx * 1.1, 2);
+      var MM = Math.max(mstep, Math.ceil(mx * 1.1 / mstep) * mstep);
+      var MY = function (v) { return macdTop + (MM - v) / (2 * MM) * mH; };
+      s += '<g class="layer g-sub">';
+      [MM, 0, -MM].forEach(function (v) {
+        s += '<line class="' + (v === 0 ? 'subz' : 'grid') + '" x1="' + m.l + '" x2="' + xr + '" y1="' + MY(v) + '" y2="' + MY(v) + '"/>';
+        s += '<text class="axis" x="' + (m.l - 6) + '" y="' + (MY(v) + 4) + '" text-anchor="end">' + (v === 0 ? '0' : (v > 0 ? '' : MINUS) + axisFmt(Math.abs(v), mstep)) + '</text>';
+      });
+      D.forEach(function (d, hi2) {
+        if (d.hist == null) return;
+        var y1 = MY(0), y2 = MY(d.hist), bw = Math.max(2, Math.min(14, step * 0.58));
+        s += '<rect class="' + (d.hist >= 0 ? 'hup' : 'hdn') + '" x="' + (X(hi2) - bw / 2) + '" y="' + Math.min(y1, y2) + '" width="' + bw + '" height="' + Math.max(1, Math.abs(y2 - y1)) + '"/>';
+      });
+      var md2 = '', sd2 = '';
+      D.forEach(function (d, mi2) {
+        if (d.macd != null) md2 += (md2 ? 'L' : 'M') + X(mi2) + ' ' + MY(d.macd);
+        if (d.sig != null) sd2 += (sd2 ? 'L' : 'M') + X(mi2) + ' ' + MY(d.sig);
+      });
+      if (md2) s += '<path class="mcl" d="' + md2 + '"/>';
+      if (sd2) s += '<path class="msl" d="' + sd2 + '"/>';
+      s += '<text class="lbl strong" x="' + (xr + 9) + '" y="' + (macdTop + 11) + '">' + (narrow ? 'MACD' : 'MACD(' + WIN.macd.join(',') + ')') + '</text>';
+      s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (macdTop + 26) + '">' + (lastD.macd == null ? '–' : sm(lastD.macd)) + '</text>';
+      if (narrow) {
+        s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (macdTop + 40) + '">시그널</text>';
+        s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (macdTop + 54) + '">' + (lastD.sig == null ? '–' : sm(lastD.sig)) + '</text>';
+      } else {
+        s += '<text class="lbl" x="' + (xr + 9) + '" y="' + (macdTop + 40) + '">시그널 ' + (lastD.sig == null ? '–' : sm(lastD.sig)) + '</text>';
+      }
+      s += '</g>';
+      // 예측 구간 음영(보조 패널에도 같은 경계를 보여줌)
+      s += '<g class="layer g-fc"><rect class="fz" x="' + x0 + '" y="' + rsiTop + '" width="' + (xr - x0) + '" height="' + rH + '"/><rect class="fz" x="' + x0 + '" y="' + macdTop + '" width="' + (xr - x0) + '" height="' + mH + '"/></g>';
+    }
+
+    s += '<g id="hov" visibility="hidden"><line class="cross" id="hovLine" x1="0" x2="0" y1="' + m.t + '" y2="' + (SUB ? macdBot : mainBot) + '"/></g>';
+    s += '</svg>';
+
+    host.innerHTML = s;
+    hov = host.querySelector('#hov');
+    hovLine = host.querySelector('#hovLine');
+    L = { m: m, step: step, X: X, W: W };
+    tt.hidden = true;
+    cur = null;
+  }
+
+  function row(a, b) { return '<div class="row"><span>' + a + '</span><span>' + b + '</span></div>'; }
+
+  function show(i) {
+    if (!L || i < 0 || i >= NS) return;
+    cur = i;
+    var cx = L.X(i), h = '';
+    hovLine.setAttribute('x1', cx);
+    hovLine.setAttribute('x2', cx);
+    hov.setAttribute('visibility', 'visible');
+    if (i < N) {
+      var d = D[i], neg = d.chg != null && d.chg < 0;
+      h = '<div class="d">' + d.m + '/' + d.d + ' (' + d.wd + ')</div>' +
+        row('종가', fx(d.c)) +
+        row('등락', d.chg == null ? '–' : '<span class="glyph ' + (neg ? 'dn' : 'up') + '">' + (neg ? '▼' : '▲') + '</span> ' + sgn(d.chg));
+      var ma = '';
+      MAS.forEach(function (arr, kx) {
+        var v = arr[i];
+        if (v != null) ma += row(WIN.ma[kx] + U + '선', fx(v));
+      });
+      if (ma) h += '<div class="sep">' + ma + '</div>';
+      var ix = '';
+      if (d.rsi != null) ix += row('RSI(' + WIN.rsi + ')', d.rsi.toFixed(1));
+      if (d.macd != null) ix += row('MACD', sm(d.macd));
+      if (d.sig != null) ix += row('시그널', sm(d.sig)) + row('히스토그램', sm(d.hist));
+      if (ix) h += '<div class="sep">' + ix + '</div>';
+      var b = BBS[i];
+      if (b && b.up > b.lo) h += '<div class="sep">' + row('볼린저 상단', fx(b.up)) + row('볼린저 하단', fx(b.lo)) + row('%b', ((D[i].c - b.lo) / (b.up - b.lo)).toFixed(2)) + '</div>';
+    } else {
+      var r = MODEL.rows[i - N], fdte = FD[i - N];
+      h = '<div class="d">' + fdte.m + '/' + fdte.d + ' (' + fdte.wd + ') 예측</div>' +
+        row('기대 종가', fx(r.center)) +
+        row('1σ', fx(r.lo1) + '–' + fx(r.hi1)) +
+        row('2σ', fx(r.lo2) + '–' + fx(r.hi2)) +
+        '<div class="sep">' + row(LAB.per + ' 하락', pct(1 - r.pUp)) + row(LAB.per + ' 상승', pct(r.pUp)) + row('누적 상승', pct(r.cum)) + '</div>' +
+        '<div class="sep">' + row(fl(LVLO) + ' 아래 마감', pct(r.pBelow)) + row(fl(LVHI) + ' 위 마감', pct(r.pAbove)) + '</div>';
+    }
+    tt.innerHTML = h;
+    tt.hidden = false;
+    var tw = tt.offsetWidth;
+    var left = cx + 14;
+    if (left + tw > L.W - 4) left = cx - 14 - tw;
+    if (left < 4) left = 4;
+    tt.style.left = left + 'px';
+    tt.style.top = '10px';
+  }
+  function hide() {
+    if (hov) hov.setAttribute('visibility', 'hidden');
+    tt.hidden = true;
+    cur = null;
+  }
+  function idxFromEvent(e) {
+    var r = wrap.getBoundingClientRect();
+    return Math.floor((e.clientX - r.left - L.m.l) / L.step);
+  }
+  wrap.addEventListener('pointermove', function (e) {
+    if (!L) return;
+    var i = idxFromEvent(e);
+    if (i < 0 || i >= NS) { hide(); return; }
+    show(i);
+  });
+  wrap.addEventListener('pointerdown', function (e) {
+    if (!L) return;
+    var i = idxFromEvent(e);
+    if (i >= 0 && i < NS) show(i);
+  });
+  wrap.addEventListener('pointerleave', function (e) {
+    if (e.pointerType === 'touch') return;
+    hide();
+  });
+  wrap.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') { show(cur == null ? N - 1 : Math.max(0, cur - 1)); e.preventDefault(); }
+    else if (e.key === 'ArrowRight') { show(cur == null ? N - 1 : Math.min(NS - 1, cur + 1)); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); e.preventDefault(); }
+    else if (e.key === 'End') { show(NS - 1); e.preventDefault(); }
+    else if (e.key === 'Escape') { hide(); }
+  });
+
+  function bindToggle(id, clsName) {
+    var b = document.getElementById(id);
+    b.addEventListener('click', function () {
+      var on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      wrap.classList.toggle(clsName, !on);
+    });
+  }
+  bindToggle('tg-bb', 'off-bb');
+  bindToggle('tg-fc', 'off-fc');
+  bindToggle('tg-lv', 'off-lv');
+  bindToggle('tg-ma', 'off-ma');
+  bindToggle('tg-pt', 'off-pt');
+  document.getElementById('tg-sub').addEventListener('click', function () {
+    SUB = this.getAttribute('aria-pressed') !== 'true';
+    this.setAttribute('aria-pressed', SUB ? 'true' : 'false');
+    render();
+  });
+
+  document.getElementById('btn-table').addEventListener('click', function () {
+    var b = this;
+    var on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.textContent = on ? '차트로 보기' : '표로 보기';
+    document.getElementById('tablewrap').hidden = !on;
+    wrap.hidden = on;
+    if (!on) render();
+  });
+
+  // 예측 컨트롤
+  var slT = document.getElementById('sl-t');
+  var slM = document.getElementById('sl-m');
+  var oT = document.getElementById('o-t');
+  var oM = document.getElementById('o-m');
+
+  function refreshForecast() {
+    if (!DATA || DATA.error) return;
+    recompute();
+    updateForecast();
+    if (!wrap.hidden) render();
+  }
+  slT.addEventListener('input', function () {
+    S.wT = parseFloat(slT.value);
+    oT.textContent = S.wT.toFixed(2);
+    refreshForecast();
+  });
+  slM.addEventListener('input', function () {
+    S.wM = parseFloat(slM.value);
+    oM.textContent = S.wM.toFixed(2);
+    refreshForecast();
+  });
+  document.getElementById('btn-reset').addEventListener('click', function () {
+    S.wT = DEF.wT; S.wM = DEF.wM;
+    slT.value = DEF.wT; slM.value = DEF.wM;
+    oT.textContent = DEF.wT.toFixed(2);
+    oM.textContent = DEF.wM.toFixed(2);
+    refreshForecast();
+  });
+
+  // 캡처 모드 버튼
+  document.getElementById('btn-cap').addEventListener('click', openCap);
+  document.getElementById('cap-close').addEventListener('click', closeCap);
+  document.getElementById('cap-save').addEventListener('click', capSave);
+  document.getElementById('cap-share').addEventListener('click', capShare);
+  document.getElementById('capov').addEventListener('click', function (e) { if (e.target === this) closeCap(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !document.getElementById('capov').hidden) closeCap(); });
+
+  // ── 품목 화면 전체 갱신(탭을 바꿀 때마다 호출) ─────────────────
+  function refreshItem() {
+    slT.value = DEF.wT; slM.value = DEF.wM;
+    oT.textContent = DEF.wT.toFixed(2);
+    oM.textContent = DEF.wM.toFixed(2);
+    recompute();
+    updateHead();
+    updateStats();
+    updateLegend();
+    updateFinds();
+    updateHistTable();
+    updateHow();
+    updateLimits();
+    updateSignals();
+    updateForecast();
+    updateLadders();
+    hide();
+    if (!wrap.hidden) render();
+  }
+
+  // ── 전체 요약 탭 ─────────────────────────────────────────────
+  function ovByCode() {
+    var map = {};
+    ROOT.overview.forEach(function (r) { map[r.code] = r; });
+    return map;
+  }
+  function ovCell(r) {
+    var dg = r.digits, h = '';
+    var first = '<td class="lbl1">' + esc(r.label) + '<small>' + esc(r.code) + ' · ' + esc(r.unit_label) + '</small></td>';
+    if (r.error) return first + '<td colspan="11" class="txt">' + esc(r.error) + '</td>';
+    var d = mkDay(r.last_date);
+    h += first;
+    h += '<td class="ctr">' + (r.freq === 'W' ? '주간' : '일간') + '</td>';
+    h += '<td class="ctr">' + d.m + '/' + d.d + (r.stale ? '<span class="pill">미갱신 ' + r.stale_days + (r.freq === 'W' ? '일' : '영업일') + '</span>' : '') + (r.n_warn ? '<span class="pill" title="탭에서 확인">경고 ' + r.n_warn + '</span>' : '') + '</td>';
+    h += '<td>' + num(r.last, dg) + '</td>';
+    h += '<td class="' + cls(r.chg1) + '">' + (r.chg1 == null ? '–' : sgn(r.chg1)) + '</td>';
+    h += '<td class="' + cls(r.chgN) + '">' + (r.chgN == null ? '–' : sgn(r.chgN) + ' · ' + r.nN + r.unitN) + '</td>';
+    h += '<td class="' + (r.rsi == null ? '' : r.rsi >= 70 ? 'hot' : r.rsi <= 30 ? 'cold' : '') + '">' + (r.rsi == null ? '–' : r.rsi.toFixed(0)) + '</td>';
+    h += '<td class="' + (r.pb > 1 ? 'hot' : r.pb < 0 ? 'cold' : '') + '">' + r.pb.toFixed(2) + '</td>';
+    h += '<td class="' + cls(r.long_gap) + '">' + (r.long_gap == null ? '–' : sgn(r.long_gap)) + '</td>';
+    h += '<td class="txt2 ' + (r.macd_tone === 'up' ? 'pos' : r.macd_tone === 'dn' ? 'neg' : '') + '">' + (r.macd_tone === 'up' ? '▲ 시그널 위' : r.macd_tone === 'dn' ? '▼ 시그널 아래' : '–') + '</td>';
+    var edgeTxt = r.edge === 'up' ? '▲ 상승 우위' : r.edge === 'dn' ? '▼ 하락 우위' : '우위 없음';
+    h += '<td class="txt2 ' + (r.edge === 'up' ? 'pos' : r.edge === 'dn' ? 'neg' : '') + '">' + edgeTxt + ' <span style="color:var(--muted)">(' + Math.round(r.p3_up * 100) + '/' + Math.round(r.p3_dn * 100) + ')</span></td>';
+    h += '<td>' + r.p1y.toFixed(0) + '%<span class="mini"><i style="width:' + Math.max(2, Math.min(100, r.p1y)) + '%"></i></span></td>';
+    return h;
+  }
+  function renderOverview() {
+    var map = ovByCode(), mt = ROOT.meta, cnt = { up: 0, dn: 0, none: 0 }, nStale = 0, nWarn = 0, staleNames = [];
+    ROOT.overview.forEach(function (r) {
+      if (r.error) return;
+      cnt[r.edge]++;
+      if (r.stale) { nStale++; staleNames.push(r.label); }
+      if (r.n_warn) nWarn++;
+    });
+    document.getElementById('ov-eyebrow').textContent = 'Platts 평가가격 · ' + mt.n_items + '개 품목 · 기준 최신 입력일 ' + mt.latest_date + ' · 생성 ' + mt.generated_at;
+    document.getElementById('ov-verdict').textContent = '다음 봉 기준 상승 우위 ' + cnt.up + '개, 하락 우위 ' + cnt.dn + '개, 우위 없음 ' + cnt.none + '개입니다. 행을 누르면 품목 탭으로 이동합니다.';
+    var bn = document.getElementById('ov-banner'), bh = '';
+    if (nStale) bh += '<div><b>미갱신 ' + nStale + '개:</b> ' + esc(staleNames.join(', ')) + ' — 마지막 입력일이 기준일보다 늦습니다.</div>';
+    if (nWarn) bh += '<div><b>확인 필요 ' + nWarn + '개 품목:</b> 가격이 자주 갱신되지 않거나 급변동이 있습니다. 해당 품목 탭 상단의 경고를 확인하세요.</div>';
+    bn.innerHTML = bh;
+    bn.hidden = !bh;
+    var head = '<thead><tr><th>품목</th><th class="ctr">주기</th><th class="ctr">최근일</th><th>종가</th><th>전봉</th><th>중기 변화</th><th>RSI</th><th>%b</th><th>장기선 대비</th><th>MACD</th><th>다음 봉 방향 (상승/하락 %)</th><th>1년 위치</th></tr></thead>';
+    var out = '';
+    ROOT.groups.forEach(function (g) {
+      var rows = g.items.map(function (c) { return map[c]; }).filter(Boolean);
+      out += '<div class="ovg"><h3>' + esc(g.label) + '</h3><div class="twrap"><table class="ovt">' + head + '<tbody>' +
+        rows.map(function (r) { return '<tr data-code="' + esc(r.code) + '" tabindex="0" role="link" aria-label="' + esc(r.label) + ' 탭으로 이동">' + ovCell(r) + '</tr>'; }).join('') +
+        '</tbody></table></div></div>';
+    });
+    document.getElementById('ov-body').innerHTML = out;
+    document.getElementById('ov-how').innerHTML = [
+      '종가·전봉: 가장 최근 평가가격과 직전 봉 대비 등락률입니다. 일간 품목은 하루, 주간 품목(AN·ABS·PS·HIPS)은 한 주가 한 봉입니다.',
+      '중기 변화: 일간은 5일 전, 주간은 4주 전 대비 변화율입니다.',
+      'RSI: 일간 14, 주간 9(와일더). 70 이상 빨강, 30 이하 파랑으로 강조합니다. %b: 볼린저밴드 안 위치(0=하단, 1=상단)이며 1 초과·0 미만이면 밴드 밖입니다.',
+      '장기선 대비: 일간 60일선, 주간 26주선 대비 종가의 간격입니다. MACD는 일간 12·26·9, 주간 6·13·5입니다.',
+      '다음 봉 방향: 추세 반영도 0.5, 평균회귀 반영도 0.5 기준으로 다음 봉의 상승·하락 확률이 10%p 이상 벌어지면 우위로 표시합니다. 괄호는 상승/하락 확률(%)입니다. 검증되지 않은 가정 기반 계산이며 매수·매도 신호가 아닙니다.',
+      '1년 위치: 최근 1년(일간 250봉, 주간 52봉) 가격 중 현재가가 몇 %보다 높은지(백분위)입니다. 높을수록 최근 1년 기준 비싼 구간입니다.',
+      '미갱신: 이 품목의 마지막 입력일이 전체 최신 입력일보다 늦다는 뜻입니다(일간은 1영업일 이상, 주간은 10일 이상). 가격을 입력하면 해소됩니다.'
+    ].map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+  }
+
+  // ── 탭 ───────────────────────────────────────────────────────
+  function groupOf(code) { return ROOT.items[code].meta.group; }
+  function renderTabs() {
+    var map = ovByCode(), curGroup = CUR ? groupOf(CUR) : null, h = '';
+    h += '<button class="tab" role="tab" data-g="__all" aria-selected="' + (CUR == null) + '">전체 요약</button>';
+    ROOT.groups.forEach(function (g) {
+      h += '<button class="tab" role="tab" data-g="' + esc(g.id) + '" aria-selected="' + (curGroup === g.id) + '">' + esc(g.label) + '<span class="cnt">' + g.items.length + '</span></button>';
+    });
+    document.getElementById('grp-row').innerHTML = h;
+    var ih = '';
+    if (curGroup) {
+      var grp = ROOT.groups.filter(function (g) { return g.id === curGroup; })[0];
+      grp.items.forEach(function (c) {
+        var r = map[c], chg = r && !r.error ? r.chg1 : null;
+        ih += '<button class="tab" role="tab" data-code="' + esc(c) + '" aria-selected="' + (CUR === c) + '">' + esc(ROOT.items[c].meta.label) +
+          (chg == null ? '' : '<span class="tchg ' + (chg < 0 ? 'dn' : 'up') + '">' + (chg < 0 ? '▼' : '▲') + Math.abs(chg).toFixed(1) + '%</span>') +
+          (r && r.stale ? '<span class="dot" title="미갱신"></span>' : '') + '</button>';
+      });
+    }
+    document.getElementById('itm-row').innerHTML = ih;
+  }
+  function setHash() {
+    try { history.replaceState(null, '', CUR ? '#' + ROOT.items[CUR].meta.key : location.pathname + location.search); } catch (e) { /* 일부 환경에서는 주소 변경이 막혀 있음 */ }
+  }
+  function fromHash() {
+    try {
+      var k = decodeURIComponent((location.hash || '').slice(1)).toUpperCase();
+      if (!k) return null;
+      for (var code in ROOT.items) {
+        if (ROOT.items[code].meta.key.toUpperCase() === k || code.toUpperCase() === k) return code;
+      }
+    } catch (e) { /* 해시를 읽지 못하면 전체 요약으로 시작 */ }
+    return null;
+  }
+  function select(code, noScroll) {
+    var ov = document.getElementById('overview'), iv = document.getElementById('itemview');
+    hide();
+    if (code == null) {
+      CUR = null; DATA = null; MODEL = null;
+      ov.hidden = false; iv.hidden = true;
+      document.title = '원료 가격 기술적 분석';
+      renderOverview();
+    } else {
+      var ok = load(code);
+      ov.hidden = true; iv.hidden = false;
+      var eb = document.getElementById('item-error'), ic = document.getElementById('itemcontent');
+      if (!ok) {
+        eb.hidden = false; eb.textContent = DATA.meta.label + ': ' + DATA.error; ic.hidden = true; MODEL = null;
+      } else {
+        eb.hidden = true; ic.hidden = false;
+        refreshItem();
+      }
+    }
+    updateNotes();
+    renderTabs();
+    setHash();
+    if (!noScroll) window.scrollTo(0, 0);
+  }
+  document.getElementById('grp-row').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button[data-g]') : null;
+    if (!b) return;
+    var gid = b.getAttribute('data-g');
+    if (gid === '__all') { select(null); return; }
+    var grp = ROOT.groups.filter(function (g) { return g.id === gid; })[0];
+    if (!grp || !grp.items.length) return;
+    select(CUR && groupOf(CUR) === gid ? CUR : grp.items[0]);
+  });
+  document.getElementById('itm-row').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button[data-code]') : null;
+    if (b) select(b.getAttribute('data-code'));
+  });
+  var ovBody = document.getElementById('ov-body');
+  ovBody.addEventListener('click', function (e) {
+    var tr = e.target.closest ? e.target.closest('tr[data-code]') : null;
+    if (tr) select(tr.getAttribute('data-code'));
+  });
+  ovBody.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var tr = e.target.closest ? e.target.closest('tr[data-code]') : null;
+    if (tr) { e.preventDefault(); select(tr.getAttribute('data-code')); }
+  });
+
+  // 초기 그리기: 주소의 #키가 있으면 그 품목, 없으면 전체 요약
+  select(fromHash(), true);
+  if (window.ResizeObserver) {
+    var pending = false;
+    new ResizeObserver(function () {
+      if (pending || wrap.hidden || !CUR) return;
+      pending = true;
+      requestAnimationFrame(function () { pending = false; render(); });
+    }).observe(wrap);
+  } else {
+    window.addEventListener('resize', function () { if (!wrap.hidden && CUR) render(); });
+  }
+  // 시험용 훅(자동 검증에서 모델 값과 화면 상태를 읽음)
+  window.__CHEM__ = {
+    select: select,
+    model: function () { return MODEL; },
+    levels: function () { return levelRows(); },
+    root: ROOT,
+    cur: function () { return CUR; }
+  };
+})();
+</script>
+</body>
+</html>

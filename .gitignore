@@ -1,0 +1,10 @@
+# 가격 원본(Platts)은 공개 레포에 올리지 않습니다. 구글시트가 원본 저장소입니다.
+data/prices.csv
+data/*.bak
+data/*.csv.bak
+# 빌드 산출물은 GitHub Actions 가 만들어 Pages 로 배포합니다.
+site/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env

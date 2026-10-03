@@ -1,0 +1,63 @@
+# 시트의 가격을 받아 대시보드를 만들어 GitHub Pages 로 배포합니다.
+# 실행 시점: 평일 아침 한국시간 08:00(UTC 일~목 23:00), 수동 실행, 그리고 admin.html 저장 직후(Apps Script 가 호출).
+name: build-site
+
+on:
+  schedule:
+    - cron: "0 23 * * 0-4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 라이브러리 설치
+        run: pip install -r requirements.txt pytest
+
+      - name: 코드 테스트
+        run: python -m pytest tests -q
+
+      - name: 시트에서 가격 받기
+        env:
+          CHEM_GAS_URL: ${{ secrets.CHEM_GAS_URL }}
+          CHEM_GAS_TOKEN: ${{ secrets.CHEM_GAS_TOKEN }}
+        run: python -m src.cli sync --no-build
+
+      - name: 대시보드 만들기
+        env:
+          CHEM_GAS_URL: ${{ secrets.CHEM_GAS_URL }}
+        run: |
+          python -m src.cli build
+          rm -f site/artifact.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
