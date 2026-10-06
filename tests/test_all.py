@@ -150,9 +150,9 @@ def test_weekly_bars_collapses_daily_filled_data():  # 일간으로 채워진 �
 
 def test_weekly_items_get_weekly_presets():  # 주간 품목 지정 확인
     freq = {it["key"]: it["freq"] for it in cfg.ITEMS}  # 키별 주기
-    for key in ("ABS", "PS", "HIPS", "AN_CFR_FE", "ETHYLENE", "PROPYLENE", "BD_CFR_CN"):  # 주간 가격 품목
+    for key in ("ABS", "PS", "HIPS", "AN_CFR_FE", "ETHYLENE", "PROPYLENE"):  # 주간 가격 품목
         assert freq[key] == "W", key  # 주간으로 지정됨
-    for key in ("WTI_NYMEX", "NAPHTHA", "BZ_FOB_KR", "SM_CFR_CN", "SM_EAST_CN"):  # 일간 품목
+    for key in ("WTI_NYMEX", "NAPHTHA", "BZ_FOB_KR", "SM_CFR_CN", "SM_EAST_CN", "BD_CFR_CN"):  # 일간 품목(BD CFR 중국은 일간)
         assert freq[key] == "D", key  # 일간 유지
 
 

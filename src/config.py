@@ -42,7 +42,7 @@ ITEMS = [  # 품목 목록(탭 순서)
     {"code": "AAIKW00", "key": "SM_FOB_USG", "label": "Styrene FOB USG", "group": "sm", "unit": "LB", "ccy": "USC", "freq": "D", "name": "Styrene FOB USG cts/lb"},
     {"code": "PHAOO00", "key": "AN_CFR_FE", "label": "Acrylonitrile CFR FE Asia", "group": "an", "unit": "MT", "ccy": "USD", "freq": "W", "name": "ACN CFR FE Asia Weekly"},
     {"code": "AAWWM00", "key": "BD_FOB_KR", "label": "Butadiene FOB Korea", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Butadiene FOB Korea"},
-    {"code": "AAWWL00", "key": "BD_CFR_CN", "label": "Butadiene CFR China", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "W", "name": "Butadiene CFR China"},
+    {"code": "AAWWL00", "key": "BD_CFR_CN", "label": "Butadiene CFR China", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Butadiene CFR China"},
     {"code": "BTNEA00", "key": "BD_CFR_NEA", "label": "Butadiene CFR NE Asia", "group": "bd", "unit": "MT", "ccy": "USD", "freq": "D", "name": "Butadiene CFR North East Asia"},
     {"code": "AAWWU00", "key": "BD_CN_DOM", "label": "Butadiene China Domestic (CNY)", "group": "bd", "unit": "MT", "ccy": "CNY", "freq": "D", "name": "Butadiene China Domestic (Ex-Tank) Yuan/mt"},
     {"code": "PHAHF00", "key": "ABS", "label": "ABS Inj CFR China", "group": "resin", "unit": "MT", "ccy": "USD", "freq": "W", "name": "ABS Inj CFR China Weekly"},
