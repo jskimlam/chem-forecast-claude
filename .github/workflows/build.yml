@@ -52,8 +52,10 @@ jobs:
         env:
           CHEM_GAS_URL: ${{ secrets.CHEM_GAS_URL }}
         run: |
-          python -m src.cli build
-          rm -f site/artifact.html
+          set -o pipefail  # 빌드가 실패하면 tee 를 거쳐도 실패로 처리
+          python -m src.cli build | tee build.log
+          echo "::notice title=품목별 데이터 품질 경고::$(grep '^\[품질\]' build.log | sed ':a;N;$!ba;s/%/%25/g;s/\r//g;s/\n/%0A/g' || true)"
+          rm -f site/artifact.html build.log
 
       - uses: actions/configure-pages@v5
 

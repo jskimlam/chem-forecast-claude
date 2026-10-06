@@ -16,7 +16,7 @@ admin.html (비밀번호) ──저장──▶ Apps Script 웹앱 ──▶ 구
 ## 표시 품목 (src/config.py 의 SHOW_CODES)
 NMCL001 WTI NYMEX · PAAAD00 Naphtha CFR Japan · AAMFI00 Styrene CFR China · AAOTU00 Styrene East China (CNY) · AAOTM00 Ethylene CFR NE Asia · PHASM05 Benzene FOB Korea · AAWWK00 프로필렌 · PHAOO00 AN(주간) · AAWWL00 BD CFR 중국 · PHAIL00 PS(주간) · PHAIR00 HIPS(주간) · PHAHF00 ABS(주간)
 
-품목을 바꾸려면 `SHOW_CODES` 를 고치고 시트 헤더에도 같은 코드를 둡니다(탭 이름은 `price` 또는 `prices`, 없으면 첫 번째 탭). 주간/일간은 같은 파일의 품목별 `freq` 한 글자(W/D)로 바꿉니다.
+품목을 바꾸려면 `SHOW_CODES` 를 고치고 시트 헤더에도 같은 코드를 둡니다(탭 이름은 `price` 또는 `prices`, 없으면 첫 번째 탭). 주간/일간은 같은 파일의 품목별 `freq` 한 글자(W/D)로 바꿉니다. 현재 주간은 AN·ABS·PS·HIPS 뿐이고 나머지(BD CFR 중국, 에틸렌, 프로필렌 포함)는 일간입니다.
 
 ## 최초 설정 (한 번만)
 1. **시트:** `price` 탭 A1 에 `date`, B1부터 12개 코드를 두고 과거 데이터를 붙여 넣습니다. (날짜 오름차순, 주간 품목은 가격이 나온 날만 값)
@@ -24,15 +24,15 @@ NMCL001 WTI NYMEX · PAAAD00 Naphtha CFR Japan · AAMFI00 Styrene CFR China · A
    *프로젝트 설정 > 스크립트 속성*에 추가:
    - `ADMIN_PASSWORD` : 입력 페이지 비밀번호
    - `READ_TOKEN` : 길고 무작위인 문자열(빌드용)
-   - (선택) `GITHUB_TOKEN`, `GITHUB_REPO=jskimlam/chem-forecast-claude` : 저장 직후 바로 재빌드
+   - (권장) `GITHUB_TOKEN`, `GITHUB_REPO=jskimlam/chem-forecast-claude` : 저장 직후 바로 재빌드. 없으면 저장해도 다음 정기 빌드(평일 08:00 KST, GitHub 사정으로 1~3시간 늦을 수 있음)까지 대시보드에 반영되지 않습니다.
    편집기에서 `setupCheck` 를 실행해 `[OK]` 인지 확인한 뒤 *배포 > 새 배포 > 웹 앱*(실행: 나, 액세스: 모든 사용자)으로 배포하고 `/exec` 주소를 복사합니다.
 3. **GitHub:** *Settings > Secrets and variables > Actions* 에 `CHEM_GAS_URL`(배포 주소), `CHEM_GAS_TOKEN`(= READ_TOKEN 값) 추가.
    *Settings > Pages > Source* 를 **GitHub Actions** 로 바꾸고, *Actions > build-site > Run workflow* 를 한 번 실행합니다.
-4. `GITHUB_TOKEN`(선택): 이 레포에 한정한 fine-grained 토큰, 권한 *Actions: Read and write*.
+4. `GITHUB_TOKEN`(저장 즉시 반영용): GitHub *Settings > Developer settings > Personal access tokens > Fine-grained tokens* 에서 *Only select repositories* 로 이 레포만 고르고 *Repository permissions > Actions: Read and write* 로 만든 뒤, 값을 Apps Script 스크립트 속성 `GITHUB_TOKEN` 에만 넣습니다(채팅·코드에 붙이지 않습니다). 편집기에서 `setupCheck` 를 실행해 `[OK] GITHUB_TOKEN` 이 보이면 끝입니다. 토큰은 만료일이 있으니 만료 전에 새로 만들어 교체하세요.
 
 ## 매일 쓰는 법
 `admin.html` 에서 비밀번호 입력 → 날짜 선택 → 가격 입력 → 저장. 직전 대비 ±25% 초과와 주말 날짜는 확인 후에만 저장됩니다.
-(시트에 직접 입력해도 됩니다. 이 경우 Actions 의 *Run workflow* 를 누르거나 다음 평일 아침을 기다립니다.)
+저장 후 1~2분이면 빌드·배포가 끝나고, 브라우저 캐시 때문에 새로고침이 한 번 더 필요할 수 있습니다. (시트에 직접 입력한 경우에는 Actions 의 *Run workflow* 를 누르거나 다음 평일 아침을 기다립니다.)
 
 ## 로컬에서 돌리기
 ```

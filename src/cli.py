@@ -53,6 +53,9 @@ def do_build() -> int:  # 사이트 빌드 실행 함수
     payload, errors = build_all(frame)  # 데이터 생성
     for e in errors:  # 품목별 문제 출력
         print(f"[주의] {e}")  # 주의 출력
+    for code, it in payload["items"].items():  # 품목마다 품질 경고 확인
+        for w in (it.get("meta") or {}).get("warnings", []):  # 경고 문구마다
+            print(f"[품질] {it['meta'].get('key', code)}: {w}")  # 실행 화면에서 볼 수 있게 출력
     out = render_site(payload)  # 사이트 생성
     meta = payload["meta"]  # 전체 메타
     print(f"[완료] 기준 최신일 {meta['latest_date']}, 품목 {meta['n_items']}개, 생성 {meta['generated_at']}")  # 완료 안내
