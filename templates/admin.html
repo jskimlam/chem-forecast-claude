@@ -76,6 +76,7 @@ button:disabled { opacity: .5; cursor: default; }
 .box.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: var(--warn-line); }
 .box.ok { background: var(--ok-bg); color: var(--ok-ink); }
 .box.err { background: var(--err-bg); color: var(--err-ink); }
+.box a { color: inherit; font-weight: 600; text-decoration: underline; } /* 상자 안 링크는 글자색을 따르고 밑줄로 구분 */
 .hint { font-size: 12px; color: var(--muted); }
 details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
 @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
@@ -128,6 +129,7 @@ details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
     <button type="button" id="btn-clear">입력칸 비우기</button>
   </div>
   <div id="result" class="box" hidden role="status"></div>
+  <div id="rebuildbox" class="box" hidden role="status"></div><!-- 저장 뒤 대시보드 재빌드 결과(시작됨 / 건너뜀 / 실패)를 따로 크게 보여주는 상자 -->
 </main>
 
 <script>
@@ -137,8 +139,9 @@ details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
   var ITEMS = __ITEMS_JSON__; // 빌드할 때 심는 품목 목록 [{code,key,label,group,groupLabel,freq,unit}]
   var BIG = 0.25; // 직전 대비 이 비율을 넘으면 입력칸에 경고 표시
   var LAST = {}; // 코드 → {date, price} (불러온 직전 가격)
+  var ACTIONS_URL = 'https://github.com/jskimlam/chem-forecast-claude/actions/workflows/build.yml'; // 수동 재빌드(Run workflow)를 누르는 GitHub 화면
   var els = {};
-  ['gasurl', 'pw', 'date', 'dow', 'items', 'btn-load', 'btn-save', 'btn-confirm', 'btn-clear', 'load-status', 'warnbox', 'result', 'urlbox'].forEach(function (id) { els[id] = document.getElementById(id); });
+  ['gasurl', 'pw', 'date', 'dow', 'items', 'btn-load', 'btn-save', 'btn-confirm', 'btn-clear', 'load-status', 'warnbox', 'result', 'rebuildbox', 'urlbox'].forEach(function (id) { els[id] = document.getElementById(id); });
 
   function store(kind, key, val) { // 브라우저 저장소 읽기/쓰기(막혀 있어도 동작하도록 try)
     try { var s = kind === 'local' ? window.localStorage : window.sessionStorage; if (val === undefined) return s.getItem(key) || ''; s.setItem(key, val); } catch (e) { return ''; }
@@ -214,6 +217,26 @@ details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
     var b = document.createElement('strong'); b.textContent = title; el.appendChild(b);
     if (lines && lines.length) { var ul = document.createElement('ul'); lines.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); el.appendChild(ul); }
   }
+  function addLink(el, href, text) { // 상자 맨 아래에 새 탭으로 열리는 링크 한 줄 추가
+    var p = document.createElement('div'); p.style.marginTop = '8px'; // 줄 만들고 위 간격 주기
+    var a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = text; // 링크 만들기
+    p.appendChild(a); el.appendChild(p); // 상자에 붙이기
+  }
+  function rebuildInfo(rb, date) { // 저장 응답의 rebuild 값을 화면용 {종류, 제목, 안내 줄}로 바꾸는 함수
+    var s = String(rb || ''); // 문자열로 정리
+    if (s === 'started') return { kind: 'ok', title: '대시보드 다시 만들기를 시작했습니다.', lines: ['1~2분 뒤 반영됩니다. 대시보드를 새로고침해 상단의 "기준 최신 입력일"이 ' + date + ' 이상인지 확인하세요.', '캐시 때문에 한 번 더 새로고침이 필요할 수 있습니다.'] }; // 정상
+    if (s === 'skipped') return { kind: 'warn', title: '시트에는 저장됐지만, 대시보드는 아직 바뀌지 않았습니다.', lines: ['즉시 반영 설정이 비어 있습니다. Apps Script 스크립트 속성의 GITHUB_TOKEN, GITHUB_REPO 를 확인하고 편집기에서 setupCheck 를 실행하세요.', '지금 바로 반영하려면 GitHub Actions 에서 build-site 를 수동 실행(Run workflow)하세요. 그대로 두면 다음 평일 아침 자동 빌드 때 반영됩니다(1~3시간 늦어질 수 있음).'] }; // 설정 누락
+    var m = /^failed:(\d+)$/.exec(s); // 실패 코드 추출
+    var code = m ? m[1] : ''; // 숫자 코드(없으면 빈 문자열)
+    var why = { // 코드별 원인 안내
+      '401': '토큰이 틀렸거나 만료됐습니다. 새 토큰을 만들어 스크립트 속성 GITHUB_TOKEN 을 교체하세요.',
+      '403': '토큰 권한이 부족합니다. 이 저장소만 선택하고 Actions: Read and write 권한으로 다시 만드세요.',
+      '404': '저장소 이름(GITHUB_REPO)이 틀렸거나 토큰이 이 저장소에 접근할 수 없습니다. build.yml 파일명도 확인하세요.',
+      '422': '요청이 거절됐습니다. 워크플로(build.yml)에 workflow_dispatch 트리거가 있는지, 브랜치 이름이 main 인지 확인하세요.'
+    };
+    var detail = code ? (why[code] || '원인을 특정하지 못했습니다. 응답 코드 ' + code + ' 를 기준으로 GitHub 설정을 확인하세요.') : '통신 오류로 요청이 전달되지 않았습니다. 잠시 뒤 다시 저장하거나 수동 실행하세요.'; // 안내 문장
+    return { kind: 'err', title: '시트에는 저장됐지만, 대시보드 다시 만들기 요청이 실패했습니다. (' + (s || '응답 없음') + ')', lines: [detail, '지금 바로 반영하려면 GitHub Actions 에서 build-site 를 수동 실행(Run workflow)하세요.'] }; // 실패
+  }
   function url() { return (GAS_URL || els.gasurl.value || '').trim(); }
 
   function call(payload) { // 웹앱에 요청 보내기(본문은 text/plain 이라 사전 요청 없이 전달됨)
@@ -249,7 +272,7 @@ details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
   }
 
   function save(confirm) { // 저장 실행
-    els.result.hidden = true;
+    els.result.hidden = true; els.rebuildbox.hidden = true; // 이전 결과 상자 숨기기
     if (!els.pw.value) { box(els.result, 'err', '비밀번호를 입력하세요.'); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(els.date.value)) { box(els.result, 'err', '날짜를 선택하세요.'); return; }
     var c = collect();
@@ -263,9 +286,10 @@ details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
       var lines = [];
       (r.added || []).forEach(function (a) { lines.push('추가 ' + labelOf(a.code) + ' = ' + fmt(a.price)); });
       (r.updated || []).forEach(function (u) { lines.push('수정 ' + labelOf(u.code) + ': ' + fmt(u.old) + ' → ' + fmt(u.price)); });
-      var rb = r.rebuild === 'started' ? '대시보드 다시 만들기를 시작했습니다. 1~2분 뒤 반영됩니다.' : (r.rebuild === 'skipped' ? '즉시 반영 설정(GITHUB_TOKEN)이 없어 바로 반영되지 않습니다. 다음 자동 빌드(평일 아침)나 GitHub Actions 수동 실행 때 반영됩니다.' : '대시보드 다시 만들기 요청이 실패했습니다. GitHub에서 직접 실행하세요. (' + r.rebuild + ')');
-      lines.push(rb);
-      box(els.result, 'ok', r.date + ' 저장 완료 (추가 ' + (r.added || []).length + ', 수정 ' + (r.updated || []).length + ')', lines);
+      box(els.result, 'ok', r.date + ' 시트 저장 완료 (추가 ' + (r.added || []).length + ', 수정 ' + (r.updated || []).length + ')', lines); // 시트 저장 결과(재빌드 문구는 아래 별도 상자로 분리)
+      var info = rebuildInfo(r.rebuild, r.date); // 재빌드 결과를 화면용으로 변환
+      box(els.rebuildbox, info.kind, info.title, info.lines); // 재빌드 결과 상자(정상 초록 / 설정 누락 노랑 / 실패 빨강)
+      if (info.kind !== 'ok') addLink(els.rebuildbox, ACTIONS_URL, 'GitHub Actions 에서 지금 수동 실행하기 →'); // 문제가 있을 때만 바로가기 링크 표시
       store('session', 'chem_pw', els.pw.value);
       doLoadQuiet();
     }).catch(function (e) { box(els.result, 'err', e.message); }).then(function () { els['btn-save'].disabled = false; els['btn-confirm'].disabled = false; });
@@ -277,7 +301,7 @@ details > summary { cursor: pointer; font-size: 13px; color: var(--ink2); }
 
   function clearInputs() { // 입력칸 비우기
     ITEMS.forEach(function (it) { document.getElementById('in-' + it.code).value = ''; showChange(it.code); });
-    els.warnbox.hidden = true; els['btn-confirm'].hidden = true; els.result.hidden = true;
+    els.warnbox.hidden = true; els['btn-confirm'].hidden = true; els.result.hidden = true; els.rebuildbox.hidden = true; // 모든 결과 상자 숨기기
   }
 
   // 시작

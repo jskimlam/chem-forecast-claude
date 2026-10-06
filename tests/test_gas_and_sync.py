@@ -225,6 +225,28 @@ def test_admin_script_parses(tmp_path):  # 입력 페이지 스크립트 문법 
     assert proc.returncode == 0, proc.stderr  # 통과
 
 
+@needs_node
+def test_admin_rebuild_info_messages(tmp_path):  # 저장 뒤 재빌드 결과(started/skipped/failed)가 올바른 종류·안내로 바뀌는지
+    html = render_admin(ROOT / "templates", tmp_path, gas_url="").read_text(encoding="utf-8")  # 생성
+    start = html.index("function rebuildInfo")  # 함수 시작
+    end = html.index("function url()", start)  # 다음 함수 직전까지
+    check = (  # 함수만 떼어 실행하고 결과를 JSON 으로 출력하는 코드
+        html[start:end]
+        + "\nconsole.log(JSON.stringify(['started','skipped','failed:401','failed:403','failed:404','failed:422','failed:500','failed',''].map(function (s) { return rebuildInfo(s, '2026-10-06'); })));"
+    )
+    js = tmp_path / "rebuild_info.js"  # 임시 파일
+    js.write_text(check, encoding="utf-8")  # 저장
+    proc = subprocess.run(["node", str(js)], capture_output=True, text=True)  # 실행
+    assert proc.returncode == 0, proc.stderr  # 오류 없음
+    got = json.loads(proc.stdout)  # 결과 읽기
+    assert [g["kind"] for g in got] == ["ok", "warn", "err", "err", "err", "err", "err", "err", "err"]  # 종류: 정상 / 설정 누락 / 실패
+    assert "2026-10-06" in got[0]["lines"][0]  # 정상 안내에 확인할 기준일 포함
+    assert "GITHUB_TOKEN" in got[1]["lines"][0]  # 설정 누락 안내에 속성 이름 포함
+    assert "만료" in got[2]["lines"][0] and "Actions: Read and write" in got[3]["lines"][0]  # 401·403 원인 안내
+    assert "GITHUB_REPO" in got[4]["lines"][0] and "workflow_dispatch" in got[5]["lines"][0]  # 404·422 원인 안내
+    assert "500" in got[6]["lines"][0] and "통신 오류" in got[7]["lines"][0]  # 알 수 없는 코드·통신 오류 안내
+
+
 def test_to_fragment_strips_document_tags():  # 게시용 조각 변환
     frag = to_fragment('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>t</title></head><body><header>x</header></body></html>')  # 변환
     assert "<html" not in frag and "<head>" not in frag and "<body" not in frag and "doctype" not in frag.lower()  # 문서 태그 제거
